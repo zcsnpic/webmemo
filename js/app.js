@@ -54,22 +54,17 @@ const App = {
 
   bindDraftAutoSave() {
     let debounceTimer;
-    const saveDraft = (e) => {
+    const saveDraft = () => {
       if (!this.currentMemory) return;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        const title = document.getElementById('memoryTitleInput')?.value || '';
-        const content = document.getElementById('memoryContentInput')?.value || '';
-        if (title || content) {
-          Storage.saveDraft(this.currentMemory, { title, content });
-          console.log('Draft saved:', this.currentMemory, { title, content });
-        }
-      }, 1000);
+        this.saveCurrentDraftToMemory();
+      }, 2000);
     };
 
     document.addEventListener('input', (e) => {
       if (e.target.id === 'memoryTitleInput' || e.target.id === 'memoryContentInput') {
-        saveDraft(e);
+        saveDraft();
       }
     });
   },
@@ -137,7 +132,11 @@ const App = {
     }
   },
 
-  async switchTab(tab) {
+  switchTab(tab) {
+    if (this.currentMemory && tab !== 'chat') {
+      this.saveCurrentDraftToMemory();
+    }
+
     this.currentTab = tab;
     document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -408,16 +407,8 @@ ${content.substring(0, 500)}
 
     if (!memory) return;
 
-    const draft = Storage.getDraft(memoryId);
-    console.log('loadMemoryToEditor:', memoryId, { draft, memoryTitle: memory.title, memoryContent: memory.content ? memory.content.substring(0, 50) : '' });
-
-    document.getElementById('memoryTitleInput').value = draft?.title || memory.title || '';
-    document.getElementById('memoryContentInput').value = draft?.content || memory.content || '';
-
-    if (draft) {
-      console.log('Restoring draft, clearing it');
-      Storage.clearDraft(memoryId);
-    }
+    document.getElementById('memoryTitleInput').value = memory.title || '';
+    document.getElementById('memoryContentInput').value = memory.content || '';
 
     if (memory.date) {
       document.getElementById('timeNaturalInput').value = memory.date;
@@ -642,10 +633,28 @@ ${content.substring(0, 500)}
   },
 
   backToList() {
+    if (this.currentMemory) {
+      this.saveCurrentDraftToMemory();
+    }
     this.currentMemory = null;
     this.currentMemoryData = null;
     Storage.setCurrentMemory(null);
     this.renderCategoryList();
+  },
+
+  saveCurrentDraftToMemory() {
+    const title = document.getElementById('memoryTitleInput')?.value || '';
+    const content = document.getElementById('memoryContentInput')?.value || '';
+
+    if (!this.currentMemory) return;
+
+    const memories = Storage.getMemoryIndex();
+    const mem = memories.find(m => m.id === this.currentMemory);
+    if (mem) {
+      mem.title = title;
+      mem.content = content;
+      Storage.setMemoryIndex(memories);
+    }
   },
 
   updateTagsDisplay() {
