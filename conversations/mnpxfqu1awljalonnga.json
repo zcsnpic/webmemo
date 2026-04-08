@@ -1,0 +1,15 @@
+{
+  "memoryId": "mnpxfqu1awljalonnga",
+  "messages": [
+    {
+      "role": "user",
+      "content": "11111111111111111"
+    },
+    {
+      "role": "assistant",
+      "content": "收到",
+      "followups": []
+    }
+  ],
+  "updated_at": "2026-04-08T10:50:36.857Z"
+}
