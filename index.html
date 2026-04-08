@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回忆录</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部提示栏 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 主布局 -->
+    <div class="main-layout">
+      <!-- 左侧栏 -->
+      <aside class="sidebar-left" id="sidebarLeft">
+        <div class="sidebar-header">
+          <h1 class="logo">📔 回忆录</h1>
+        </div>
+
+        <div class="sidebar-actions">
+          <button class="btn btn-primary btn-new" id="btnNew">
+            <span>+</span> 新建
+          </button>
+          <div class="search-box">
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 搜索...">
+          </div>
+        </div>
+
+        <div class="category-list" id="categoryList">
+          <!-- 栏目列表动态生成 -->
+        </div>
+
+        <div class="sidebar-footer">
+          <div class="nav-items">
+            <button class="nav-item" id="btnGlossary">
+              <span>📚</span> 名词库
+            </button>
+            <button class="nav-item" id="btnSettings">
+              <span>⚙️</span> 设置
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 中间主区域 -->
+      <main class="main-content" id="mainContent">
+        <!-- 主Tab切换 -->
+        <div class="main-tabs" id="mainTabs">
+          <button class="main-tab active" data-tab="chat" id="tabChat">
+            💬 采访区
+          </button>
+          <button class="main-tab" data-tab="organize" id="tabOrganize">
+            ✏️ 编辑区
+          </button>
+        </div>
+
+        <!-- 采访区 -->
+        <div class="tab-content active" id="chatContent">
+          <div class="chat-toolbar" id="chatToolbar">
+            <div class="ai-mode-selector" id="aiModeSelector">
+              <span class="ai-mode-label">AI模式：</span>
+              <div class="ai-mode-buttons">
+                <button class="ai-mode-btn active" data-mode="L1">记录</button>
+                <button class="ai-mode-btn" data-mode="L2">倾听</button>
+                <button class="ai-mode-btn" data-mode="L3">互动</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="chat-messages" id="chatMessages">
+            <div class="empty-state" id="chatEmptyState">
+              <p>选择或新建素材开始采访</p>
+            </div>
+          </div>
+
+          <div class="chat-input-area" id="chatInputArea">
+            <div class="input-wrapper">
+              <textarea class="chat-input" id="chatInput" placeholder="输入内容..." rows="1"></textarea>
+              <button class="btn btn-primary btn-send" id="btnSend">发送</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 编辑区 -->
+        <div class="tab-content" id="organizeContent">
+          <div class="organize-toolbar" id="organizeToolbar">
+            <button class="btn btn-secondary" id="btnBackMatrix">
+              ← 返回列表
+            </button>
+            <button class="btn btn-accent" id="btnSaveMemory">
+              💾 保存
+            </button>
+          </div>
+
+          <div class="organize-editor">
+            <input type="text" class="memory-title-input" id="memoryTitleInput" placeholder="输入标题...">
+
+            <div class="memory-content-area">
+              <textarea class="memory-content-input" id="memoryContentInput" placeholder="开始撰写..."></textarea>
+            </div>
+          </div>
+
+          <!-- AI悬浮助手 -->
+          <div class="ai-float-bubble" id="aiFloatBubble">
+            <div class="ai-float-panel">
+              <div class="ai-float-header">
+                <span>✨ AI整理助手</span>
+                <button class="ai-float-close" onclick="App.toggleAiFloatPanel()">✕</button>
+              </div>
+              <div class="ai-float-body">
+                <textarea class="ai-command-input" id="aiCommandInput" placeholder="输入指令调整内容..." rows="3"></textarea>
+                <button class="btn btn-primary btn-ai-send" id="btnAiSend">发送</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- 右侧栏 -->
+      <aside class="sidebar-right" id="sidebarRight">
+        <div class="panel-header">
+          <span class="panel-title">📋 稿件属性</span>
+        </div>
+
+        <div class="panel-content" id="panelProperties">
+          <!-- 时间信息 -->
+          <div class="property-section">
+            <div class="property-section-title">⏰ 时间信息</div>
+            <div class="time-input-section">
+              <textarea class="time-natural-input" id="timeNaturalInput" placeholder="输入时间描述，如：1985年夏天、春节前一周..." rows="2"></textarea>
+              <div class="time-analyze-actions">
+                <button class="time-analyze-btn" id="btnAnalyzeTime">✨ AI分析</button>
+              </div>
+            </div>
+            <div class="time-attribute-section" id="timeAttributeSection">
+              <div class="time-attribute-label">🤖 时间属性（Markdown标签）</div>
+              <div class="time-attribute-display" id="timeAttributeDisplay">
+                <div class="time-attribute-item">
+                  <span class="attr-label">date:</span>
+                  <span class="attr-value" id="attrDate"></span>
+                </div>
+                <div class="time-attribute-item">
+                  <span class="attr-label">period:</span>
+                  <span class="attr-value" id="attrPeriod"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 标签列表 -->
+          <div class="property-section">
+            <div class="property-section-title">🏷️ 标签</div>
+            <div class="tags-container" id="tagsContainer">
+            </div>
+            <div class="tag-add-row">
+              <input type="text" class="tag-input" id="tagInput" placeholder="输入标签后回车添加" maxlength="10">
+            </div>
+            <div class="property-hint">最多 10 个标签，已添加 <span id="tagCount">0</span> / 10</div>
+          </div>
+
+          <!-- 本文名词库 -->
+          <div class="property-section">
+            <div class="property-section-title">👤 本文名词库</div>
+            <div class="doc-glossary-list" id="docGlossaryList">
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- 新建弹窗 -->
+    <div class="modal-overlay" id="newMemoryModal">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">📝 新建记忆素材</span>
+          <button class="modal-close" onclick="closeModal('newMemoryModal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <!-- 步骤1：选择栏目 -->
+          <div id="step1Column">
+            <div class="form-group">
+              <label class="form-label">选择栏目 *</label>
+              <select class="form-input" id="modalCategorySelect">
+                <option value="">-- 请选择栏目 --</option>
+              </select>
+            </div>
+            <div style="text-align: center; padding: 12px 0; color: var(--text-secondary); font-size: 14px;">或</div>
+            <button class="add-column-btn" id="btnShowNewColumn" style="border: 1px dashed var(--primary); color: var(--primary); background: rgba(224, 122, 95, 0.05); width: 100%;">
+              <span>+</span><span>创建新栏目</span>
+            </button>
+            <div id="newColumnInModal" style="display: none; margin-top: 12px;">
+              <div class="form-group">
+                <label class="form-label">新栏目名称</label>
+                <input type="text" class="form-input" id="newColumnNameInput" placeholder="输入栏目名称">
+              </div>
+              <button class="btn btn-primary" id="btnConfirmNewColumn" style="width: 100%;">确认创建</button>
+            </div>
+          </div>
+          <!-- 步骤2：填写素材信息 -->
+          <div id="step2Info" style="display: none;">
+            <div class="form-group">
+              <label class="form-label">素材标题 *</label>
+              <input type="text" class="form-input" id="modalMemoryTitle" placeholder="例如：夏夜乘凉">
+            </div>
+            <div class="form-group">
+              <label class="form-label">记忆时间（可选）</label>
+              <input type="text" class="form-input" id="modalMemoryDate" placeholder="例如：1985年 或 80年代">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer" id="step1Footer">
+          <button class="btn btn-secondary" onclick="closeModal('newMemoryModal')">取消</button>
+          <button class="btn btn-primary" id="btnNextStep">下一步</button>
+        </div>
+        <div class="modal-footer" id="step2Footer" style="display: none;">
+          <button class="btn btn-secondary" id="btnPrevStep">上一步</button>
+          <button class="btn btn-primary" id="btnCreateMemory">创建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal modal-wide">
+        <div class="modal-header">
+          <span class="modal-title">⚙️ 系统设置</span>
+          <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-section">
+            <div class="settings-section-title">🔑 AI API 设置</div>
+            <div class="form-group">
+              <label class="form-label">API 服务地址</label>
+              <input type="text" class="form-input" id="apiEndpoint" placeholder="如：api.deepseek.com/v1/chat/completions">
+            </div>
+            <div class="form-group">
+              <label class="form-label">API 密钥</label>
+              <input type="password" class="form-input" id="apiKey" placeholder="输入您的API密钥">
+              <div class="form-hint">密钥仅本地存储，不会同步至服务器</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">默认 AI 模式</label>
+              <select class="form-input" id="defaultAiMode" style="cursor: pointer;">
+                <option value="L1">记录档 - 仅回复收到</option>
+                <option value="L2">倾听档 - 简短共情</option>
+                <option value="L3">互动档 - 深度引导</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">💬 提示词微调</div>
+            <div class="settings-item" style="border-bottom: none; padding: 8px 0;">
+              <div>
+                <div class="settings-item-label">AI 整理行为规范</div>
+                <div class="settings-item-desc">点击右侧按钮可修改提示词模板</div>
+              </div>
+              <button class="btn btn-secondary" style="height: 36px; font-size: 13px;" onclick="App.openPromptEditor()">修改</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">🔗 GitHub 同步</div>
+            <div class="form-group">
+              <label class="form-label">Personal Access Token</label>
+              <input type="password" class="form-input" id="githubTokenInput" placeholder="输入 GitHub PAT">
+              <div class="form-hint">
+                请在 GitHub Settings → Developer settings → Personal access tokens 生成新令牌，
+                需要勾选 repo 权限。
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">仓库名称</label>
+              <input type="text" class="form-input" id="repoNameInput" placeholder="如：my-memoir">
+              <div class="form-hint">将以此名称创建或使用 GitHub 仓库</div>
+            </div>
+            <div class="sync-status" id="syncStatus">
+              <span class="sync-indicator"></span>
+              <span class="sync-text">未连接</span>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; margin-top: 12px;">
+              <button class="btn btn-primary" id="btnConnectGithub">连接 GitHub</button>
+              <button class="btn btn-secondary" id="btnDisconnectGithub" style="display: none;">断开</button>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <div class="settings-section-title">📝 命名规则</div>
+            <div class="form-group">
+              <label class="form-label">素材分组命名规范</label>
+              <input type="text" class="form-input" id="namingPattern" value="{category}/{title}_{date}">
+              <div class="form-hint">如：童年/夏夜乘凉_1985.md</div>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3 class="settings-section-title">🗑️ 已删除素材</h3>
+            <div class="deleted-list" id="deletedList">
+              <p class="empty-hint">暂无已删除的素材</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('settingsModal')">取消</button>
+          <button class="btn btn-primary" onclick="App.saveSettings()">保存设置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 提示词编辑器弹窗 -->
+    <div class="modal-overlay" id="promptEditorModal">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">💬 提示词微调</span>
+          <button class="modal-close" onclick="closeModal('promptEditorModal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">当前提示词</label>
+            <textarea class="form-textarea" id="promptTemplate" rows="3">将口语化对话整理成标准书面叙事，保留核心情感与细节，不做过度美化</textarea>
+            <div class="form-hint">定义AI整理素材时的默认行为规范</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">指令输入（发送微调）</label>
+            <input type="text" class="form-input" id="promptInstruction" placeholder="输入修改指令，如：增加更多情感描写">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('promptEditorModal')">取消</button>
+          <button class="btn btn-primary" onclick="App.sendPromptInstruction()">发送并应用</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 名词库管理弹窗 -->
+    <div class="modal-overlay" id="glossaryModal">
+      <div class="modal modal-wide">
+        <div class="modal-header">
+          <span class="modal-title">📚 全局名词库</span>
+          <button class="modal-close" onclick="closeModal('glossaryModal')">✕</button>
+        </div>
+        <div class="modal-body glossary-modal-body">
+          <div class="glossary-sidebar">
+            <div class="glossary-search">
+              <input type="text" class="form-input" id="glossarySearchInput" placeholder="🔍 搜索名词...">
+            </div>
+            <div class="glossary-categories">
+              <button class="glossary-cat-btn active" data-cat="all">全部</button>
+              <button class="glossary-cat-btn" data-cat="人物">👤 人物</button>
+              <button class="glossary-cat-btn" data-cat="地点">📍 地点</button>
+              <button class="glossary-cat-btn" data-cat="物品">🎁 物品</button>
+            </div>
+            <div class="glossary-item-list" id="glossaryItemList">
+              <!-- 名词列表动态生成 -->
+            </div>
+          </div>
+          <div class="glossary-detail" id="glossaryDetail">
+            <div class="empty-state">
+              <p>选择或新增名词查看详情</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="btnAddGlossary">+ 新增名词</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 名词详情弹窗 -->
+    <div class="modal-overlay" id="glossaryEditModal">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title" id="glossaryEditTitle">📋 编辑词条</span>
+          <button class="modal-close" onclick="closeModal('glossaryEditModal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">词条分类 *</label>
+            <div class="glossary-cat-select" id="glossaryCatSelect">
+              <span class="glossary-cat-option" data-cat="人物">👤 人物</span>
+              <span class="glossary-cat-option" data-cat="地点">📍 地点</span>
+              <span class="glossary-cat-option" data-cat="物品">🎁 物品</span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">标准名称 *</label>
+            <input type="text" class="form-input" id="glossaryName" placeholder="输入词条名称">
+          </div>
+          <div class="form-group">
+            <label class="form-label">解释/描述</label>
+            <textarea class="form-textarea" id="glossaryDesc" placeholder="输入词条的解释或描述..." style="min-height: 80px;"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">别名/曾用名</label>
+            <input type="text" class="form-input" id="glossaryAlias" placeholder="用逗号分隔，如：王建军，小王">
+          </div>
+          <div class="form-group">
+            <label class="form-label">常用称谓</label>
+            <input type="text" class="form-input" id="glossaryAddress" placeholder="用逗号分隔，如：王科长，老王">
+          </div>
+          <div class="form-group">
+            <label class="form-label">关联词条</label>
+            <input type="text" class="form-input" id="glossaryRelated" placeholder="输入关联词条，用逗号分隔">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('glossaryEditModal')">取消</button>
+          <button class="btn btn-primary" id="btnSaveGlossary">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 删除确认弹窗 -->
+    <div class="modal-overlay" id="deleteConfirmModal">
+      <div class="modal modal-small">
+        <div class="modal-header">
+          <span class="modal-title">⚠️ 确认删除</span>
+          <button class="modal-close" onclick="closeModal('deleteConfirmModal')">✕</button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteConfirmText">确定要删除此素材吗？</p>
+          <p class="form-hint">删除后可在设置中恢复</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeModal('deleteConfirmModal')">取消</button>
+          <button class="btn btn-danger" id="btnConfirmDelete">删除</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/github.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

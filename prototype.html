@@ -1,0 +1,4314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回忆录客户端 - 交互原型</title>
+  <style>
+    :root {
+      --primary: #E07A5F;
+      --secondary: #3D405B;
+      --accent: #81B29A;
+      --background: #FAF8F5;
+      --surface: #FFFFFF;
+      --sidebar: #F4F1ED;
+      --border: #E8E4DF;
+      --text-primary: #2D2D2D;
+      --text-secondary: #6B6B6B;
+      --text-placeholder: #A0A0A0;
+      --warning: #F2CC8F;
+      --highlight-bg: #FFF3E0;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--background);
+      color: var(--text-primary);
+      font-size: 18px;
+      line-height: 1.7;
+      height: 100vh;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    .desktop-layout {
+      display: flex;
+      height: 100%;
+    }
+
+    /* 左侧栏 */
+    .sidebar-left {
+      width: 260px;
+      background: var(--sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-actions {
+      padding: 16px 20px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn {
+      height: 44px;
+      padding: 0 20px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: #d4694f;
+    }
+
+    .btn-secondary {
+      background: var(--surface);
+      color: var(--primary);
+      border: 1px solid var(--primary);
+    }
+
+    .btn-icon {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      background: var(--border);
+    }
+
+    .search-box {
+      padding: 0 20px 16px;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      background: var(--surface);
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .folder-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 12px;
+    }
+
+    .column-header {
+      display: flex;
+      align-items: center;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .column-header:hover {
+      background: var(--border);
+    }
+
+    .column-header.active {
+      background: var(--surface);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .column-header .icon {
+      margin-right: 8px;
+      font-size: 12px;
+      transition: transform 0.2s;
+    }
+
+    .column-header.expanded .icon {
+      transform: rotate(90deg);
+    }
+
+    .column-header .name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .column-header .count {
+      font-size: 12px;
+      color: var(--text-placeholder);
+      margin-right: 8px;
+    }
+
+    .column-actions {
+      display: none;
+      gap: 4px;
+    }
+
+    .column-header:hover .column-actions {
+      display: flex;
+    }
+
+    .column-header:hover .count {
+      display: none;
+    }
+
+    .column-action-btn {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .column-action-btn:hover {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+
+    .column-action-btn.delete:hover {
+      background: #fde8e8;
+      color: #e74c3c;
+    }
+
+    .memory-list {
+      padding-left: 24px;
+      display: none;
+    }
+
+    .column-item.expanded .memory-list {
+      display: block;
+    }
+
+    .memory-item {
+      position: relative;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-bottom: 4px;
+      transition: all 0.15s;
+    }
+
+    .memory-item:hover {
+      background: var(--surface);
+    }
+
+    .memory-item.active {
+      background: var(--surface);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .memory-item .content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .memory-item .title {
+      flex: 1;
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .memory-item .meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      padding-left: 24px;
+    }
+
+    .memory-item .actions {
+      display: none;
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      gap: 4px;
+    }
+
+    .memory-item:hover .actions {
+      display: flex;
+    }
+
+    .memory-action-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: var(--sidebar);
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .memory-action-btn:hover {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+
+    .memory-action-btn.delete:hover {
+      background: #fde8e8;
+      color: #e74c3c;
+    }
+
+    .column-input-wrapper {
+      padding: 8px 12px;
+      display: none;
+    }
+
+    .column-item.editing .column-input-wrapper {
+      display: block;
+    }
+
+    .column-item.editing .column-header {
+      display: none;
+    }
+
+    .column-name-input {
+      width: 100%;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      font-size: 14px;
+      background: var(--surface);
+    }
+
+    .column-name-input:focus {
+      outline: none;
+    }
+
+    .column-input-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .column-input-actions .btn {
+      height: 28px;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+
+    .add-column-btn {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .add-column-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(224, 122, 95, 0.05);
+    }
+
+    .column-header-add {
+      display: flex;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--primary);
+      margin-top: 4px;
+    }
+
+    .column-header-add:hover {
+      background: rgba(224, 122, 95, 0.1);
+    }
+
+    .column-header-add .icon {
+      margin-right: 6px;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-secondary);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .settings-entry {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .settings-entry:hover {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+
+    /* 中间主区域 */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      min-height: 0;
+      background: var(--background);
+    }
+
+    .main-tabs {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      background: var(--surface);
+    }
+
+    .main-tab {
+      flex: 1;
+      padding: 16px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .main-tab:hover {
+      background: var(--sidebar);
+    }
+
+    .main-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 600;
+      background: var(--background);
+    }
+
+    .main-tab.active::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: var(--primary);
+    }
+
+    .main-header {
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+    }
+
+    .main-header.hidden {
+      display: none;
+    }
+
+    .ai-mode-selector {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .ai-mode-selector.hidden {
+      display: none;
+    }
+
+    .ai-mode-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .ai-mode-buttons {
+      display: flex;
+      gap: 4px;
+      background: var(--sidebar);
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .ai-mode-btn {
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .ai-mode-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .ai-mode-btn:hover:not(.active) {
+      background: var(--border);
+    }
+
+    .panel-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .panel-view {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .panel-view.active {
+      display: flex;
+    }
+
+    /* 采访区 */
+    .chat-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .message {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 16px;
+    }
+
+    .message-ai .message-avatar {
+      background: var(--primary);
+      color: white;
+    }
+
+    .message-user .message-avatar {
+      background: var(--secondary);
+      color: white;
+    }
+
+    .message-content {
+      flex: 1;
+      max-width: 600px;
+    }
+
+    .message-text {
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    .message-ai .message-text {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px 12px 12px 12px;
+    }
+
+    .message-user .message-text {
+      background: var(--primary);
+      color: white;
+      border-radius: 12px 4px 12px 12px;
+    }
+
+    .follow-up-questions {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .follow-up-btn {
+      padding: 10px 16px;
+      background: var(--sidebar);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      text-align: left;
+      cursor: pointer;
+      color: var(--text-primary);
+      transition: all 0.15s;
+    }
+
+    .follow-up-btn:hover {
+      background: var(--surface);
+      border-color: var(--primary);
+    }
+
+    .input-area {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    .input-box {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    .chat-input {
+      width: 100%;
+      min-height: 72px;
+      max-height: 120px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 16px;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .send-btn {
+      width: 48px;
+      height: 48px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .send-btn:hover {
+      background: #d4694f;
+    }
+
+    .send-btn:active {
+      transform: scale(0.95);
+    }
+
+    /* 编辑区重构 */
+    .organize-area {
+      flex: 1;
+      min-height: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .edit-header {
+      flex-shrink: 0;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--surface);
+    }
+
+    .edit-title-input {
+      flex: 1;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--secondary);
+      border: none;
+      background: transparent;
+      padding: 8px 0;
+    }
+
+    .edit-title-input:focus {
+      outline: none;
+    }
+
+    .edit-title-input::placeholder {
+      color: var(--text-placeholder);
+    }
+
+    .save-btn {
+      height: 40px;
+      padding: 0 20px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+
+    .save-btn:hover {
+      background: #d4694f;
+    }
+
+    .save-btn.saving {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .edit-content-area {
+      flex: 1;
+      min-height: 0;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .edit-content {
+      width: 100%;
+      height: 100%;
+      font-size: 18px;
+      line-height: 1.9;
+      color: var(--text-primary);
+      border: none;
+      background: transparent;
+      resize: none;
+      padding: 0;
+    }
+
+    .edit-content:focus {
+      outline: none;
+    }
+
+    .edit-content::placeholder {
+      color: var(--text-placeholder);
+    }
+
+    /* 底部指令输入 - 编辑区AI对话框 */
+    .edit-command-bar {
+      flex-shrink: 0;
+      padding: 16px 24px;
+      border-top: 2px solid var(--accent);
+      background: linear-gradient(135deg, #fef9f7 0%, #fdf5f2 100%);
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      box-shadow: 0 -2px 8px rgba(224, 122, 95, 0.1);
+    }
+
+    .edit-command-input {
+      flex: 1;
+      min-height: 72px;
+      max-height: 120px;
+      padding: 14px 16px;
+      border: 2px solid #e8d5ce;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.5;
+      resize: none;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text-primary);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .edit-command-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224, 122, 95, 0.15);
+      background: #fffeff;
+    }
+
+    .edit-command-input::placeholder {
+      color: #b8a89a;
+      font-style: italic;
+    }
+
+    .edit-command-send {
+      width: 52px;
+      height: 52px;
+      background: linear-gradient(135deg, var(--accent) 0%, #d4694f 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      box-shadow: 0 2px 6px rgba(224, 122, 95, 0.3);
+    }
+
+    .edit-command-send:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(224, 122, 95, 0.4);
+    }
+
+    .edit-ai-send:active {
+      transform: translateY(0);
+    }
+
+    /* 编辑区AI调整悬浮气泡 */
+    .ai-float-bubble {
+      position: fixed;
+      bottom: 24px;
+      right: 280px;
+      z-index: 3000;
+      display: none;
+    }
+
+    .ai-float-bubble.active {
+      display: block;
+    }
+
+    .ai-float-panel {
+      width: 360px;
+      background: var(--surface);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      animation: bubbleFadeIn 0.2s ease;
+    }
+
+    @keyframes bubbleFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .ai-float-header {
+      padding: 14px 18px;
+      background: linear-gradient(135deg, #fef9f7 0%, #fdf5f2 100%);
+      border-bottom: 1px solid #e8d5ce;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 600;
+      color: var(--secondary);
+      font-size: 15px;
+    }
+
+    .ai-float-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .ai-float-close:hover {
+      background: var(--border);
+    }
+
+    .ai-float-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .ai-float-input {
+      width: 100%;
+      min-height: 80px;
+      max-height: 150px;
+      padding: 12px 14px;
+      border: 2px solid #e8d5ce;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.5;
+      background: white;
+      resize: vertical;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .ai-float-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(224, 122, 95, 0.15);
+    }
+
+    .ai-float-input::placeholder {
+      color: #b8a89a;
+      font-style: italic;
+    }
+
+    .ai-float-send {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--accent) 0%, #d4694f 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .ai-float-send:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(224, 122, 95, 0.35);
+    }
+
+    .ai-float-send:active {
+      transform: translateY(0);
+    }
+
+    /* 旧样式保留用于兼容性 */
+    .organize-header-card {
+      display: none;
+    }
+
+    .organize-meta-row {
+      display: none;
+    }
+
+    .organize-summary-label {
+      display: none;
+    }
+
+    .organize-summary-input {
+      display: none;
+    }
+
+    .organize-body-card {
+      display: none;
+    }
+
+    .organize-content {
+      display: none;
+    }
+
+    .organize-tips {
+      display: none;
+    }
+
+    .edit-ai-section {
+      display: none;
+    }
+
+    /* 稿件属性面板 */
+    .property-section {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .property-section:last-child {
+      border-bottom: none;
+    }
+
+    .property-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .property-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .property-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .property-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      min-width: 60px;
+    }
+
+    .property-input {
+      flex: 1;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      background: var(--sidebar);
+    }
+
+    .property-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    .property-select {
+      flex: 1;
+      height: 34px;
+      padding: 0 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      background: var(--sidebar);
+      cursor: pointer;
+    }
+
+    .property-select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .property-textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--sidebar);
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .property-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    .property-hint {
+      font-size: 12px;
+      color: var(--text-placeholder);
+      margin-top: 6px;
+    }
+
+    /* 时间信息管理 - 简洁设计 */
+    .time-input-section {
+      margin-bottom: 10px;
+    }
+
+    .time-natural-input {
+      width: 100%;
+      min-height: 48px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--surface);
+      resize: none;
+      font-family: inherit;
+    }
+
+    .time-natural-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .time-analyze-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+
+    .time-analyze-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .time-analyze-btn:hover {
+      background: #d4694f;
+    }
+
+    .time-analyze-btn.loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .time-analyze-btn.loading::after {
+      content: '...';
+    }
+
+    .time-attribute-section {
+      margin-top: 10px;
+    }
+
+    .time-attribute-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+
+    .time-attribute-display {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .time-attribute-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .attr-label {
+      font-weight: 600;
+      color: var(--accent);
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .attr-value {
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .tags-container .tag {
+      cursor: pointer;
+      opacity: 0.9;
+      font-size: 13px;
+      padding: 4px 10px;
+    }
+
+    .tags-container .tag:hover {
+      opacity: 1;
+      background: #e74c3c;
+    }
+
+    .tag-add-row {
+      margin-bottom: 4px;
+    }
+
+    .tag-input {
+      width: 100%;
+      height: 30px;
+      padding: 0 8px;
+      border: 1px dashed var(--border);
+      border-radius: 5px;
+      font-size: 13px;
+      background: transparent;
+    }
+
+    .tag-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      border-style: solid;
+      background: var(--sidebar);
+    }
+
+    /* 本文名词库 */
+    .doc-glossary-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .doc-glossary-item {
+      background: var(--sidebar);
+      border-radius: 6px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .doc-glossary-item:hover {
+      background: var(--border);
+    }
+
+    .doc-glossary-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+
+    .doc-glossary-name {
+      flex: 1;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .doc-glossary-expand {
+      font-size: 10px;
+      color: var(--text-placeholder);
+      transition: transform 0.2s;
+    }
+
+    .doc-glossary-item.expanded .doc-glossary-expand {
+      transform: rotate(90deg);
+    }
+
+    .doc-glossary-detail {
+      display: none;
+      padding: 0 10px 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .doc-glossary-item.expanded .doc-glossary-detail {
+      display: block;
+    }
+
+    .doc-glossary-field {
+      display: flex;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .doc-glossary-field .field-label {
+      color: var(--text-secondary);
+      min-width: 50px;
+    }
+
+    .doc-glossary-field .field-value {
+      color: var(--text-primary);
+    }
+
+    .doc-glossary-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .doc-glossary-btn {
+      padding: 4px 10px;
+      border: none;
+      background: var(--surface);
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .doc-glossary-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .doc-glossary-btn.delete:hover {
+      background: #e74c3c;
+    }
+
+    /* 名词库管理页面 */
+    .glossary-page {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--background);
+      z-index: 5000;
+      display: none;
+      flex-direction: column;
+    }
+
+    .glossary-page.active {
+      display: flex;
+    }
+
+    .glossary-page-header {
+      padding: 16px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .glossary-page-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .glossary-page-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .glossary-page-sidebar {
+      width: 280px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .glossary-search-box {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .glossary-search-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: var(--sidebar);
+    }
+
+    .glossary-search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background: var(--surface);
+    }
+
+    .glossary-category-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .glossary-category-item {
+      padding: 12px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+      transition: all 0.15s;
+    }
+
+    .glossary-category-item:hover {
+      background: var(--sidebar);
+    }
+
+    .glossary-category-item.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .glossary-category-item .count {
+      float: right;
+      font-size: 12px;
+      opacity: 0.7;
+    }
+
+    .glossary-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .glossary-toolbar {
+      padding: 16px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .glossary-count {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-right: auto;
+    }
+
+    .glossary-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+
+    .glossary-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .glossary-card:hover {
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .glossary-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .glossary-card-name {
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .glossary-card-type {
+      font-size: 12px;
+      padding: 2px 8px;
+      background: var(--sidebar);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .glossary-card-aliases {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .glossary-card-meta {
+      font-size: 12px;
+      color: var(--text-placeholder);
+    }
+
+    .glossary-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .glossary-card-btn {
+      padding: 6px 12px;
+      border: none;
+      background: var(--sidebar);
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .glossary-card-btn:hover {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+
+    .glossary-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+
+    .glossary-empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    /* 名词库分类层级 */
+    .glossary-cat-group {
+      margin-bottom: 8px;
+    }
+
+    .glossary-cat-item {
+      display: flex;
+      align-items: center;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .glossary-cat-item:hover {
+      background: var(--sidebar);
+    }
+
+    .glossary-cat-item.active {
+      background: var(--primary);
+      color: white;
+    }
+
+    .glossary-cat-item .toggle {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      margin-right: 6px;
+      transition: transform 0.2s;
+    }
+
+    .glossary-cat-item.expanded .toggle {
+      transform: rotate(90deg);
+    }
+
+    .glossary-cat-item .name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .glossary-cat-item .count {
+      font-size: 12px;
+      opacity: 0.7;
+      margin-right: 8px;
+    }
+
+    .glossary-cat-item .actions {
+      display: none;
+      gap: 4px;
+    }
+
+    .glossary-cat-item:hover .actions {
+      display: flex;
+    }
+
+    .glossary-cat-item:hover .count {
+      display: none;
+    }
+
+    .glossary-cat-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: transparent;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .glossary-cat-btn:hover {
+      background: var(--border);
+      color: var(--text-primary);
+    }
+
+    .glossary-cat-btn.delete:hover {
+      background: #fde8e8;
+      color: #e74c3c;
+    }
+
+    .glossary-subcat-list {
+      padding-left: 32px;
+      display: none;
+    }
+
+    .glossary-cat-item.expanded + .glossary-subcat-list {
+      display: block;
+    }
+
+    .glossary-subcat-item {
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 2px;
+      transition: all 0.15s;
+    }
+
+    .glossary-subcat-item:hover {
+      background: var(--sidebar);
+    }
+
+    .glossary-subcat-item.active {
+      background: rgba(224, 122, 95, 0.15);
+      color: var(--primary);
+    }
+
+    .glossary-subcat-item .count {
+      float: right;
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .glossary-cat-input {
+      padding: 8px 14px;
+      display: none;
+    }
+
+    .glossary-cat-input.active {
+      display: block;
+    }
+
+    .glossary-cat-input-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .glossary-cat-input input {
+      flex: 1;
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--surface);
+    }
+
+    .glossary-cat-input input:focus {
+      outline: none;
+    }
+
+    .glossary-cat-input-row .btn {
+      height: 32px;
+      padding: 0 12px;
+      font-size: 12px;
+    }
+
+    .glossary-add-cat {
+      padding: 8px 14px;
+      color: var(--primary);
+      cursor: pointer;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .glossary-add-cat:hover {
+      background: rgba(224, 122, 95, 0.1);
+      border-radius: 6px;
+    }
+
+    /* 词条详情 */
+    .glossary-detail-section {
+      margin-bottom: 16px;
+    }
+
+    .glossary-detail-label {
+      font-size: 12px;
+      color: var(--text-placeholder);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .glossary-detail-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+
+    .glossary-detail-example {
+      background: var(--sidebar);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-top: 6px;
+    }
+
+    .glossary-detail-relations {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .glossary-relation-tag {
+      padding: 4px 10px;
+      background: var(--sidebar);
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* 分类选择器 */
+    .glossary-cat-select {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px;
+      background: var(--sidebar);
+      border-radius: 8px;
+      margin-top: 8px;
+    }
+
+    .glossary-cat-option {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--surface);
+    }
+
+    .glossary-cat-option:hover {
+      border-color: var(--primary);
+    }
+
+    .glossary-cat-option.selected {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .edit-ai-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 20px;
+      min-height: 80px;
+      max-height: 120px;
+    }
+
+    .edit-ai-msg {
+      margin-bottom: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .edit-ai-msg.user {
+      color: var(--primary);
+    }
+
+    .edit-ai-msg.ai {
+      color: var(--text-secondary);
+      padding: 8px 12px;
+      background: var(--sidebar);
+      border-radius: 8px;
+      margin-top: 4px;
+    }
+
+    .edit-ai-time {
+      font-size: 11px;
+      color: var(--text-placeholder);
+      margin-right: 6px;
+    }
+
+    .edit-ai-input-row {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .edit-ai-input {
+      flex: 1;
+      min-height: 40px;
+      max-height: 80px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      resize: none;
+      font-family: inherit;
+    }
+
+    .edit-ai-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .edit-ai-send {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: var(--primary);
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .edit-ai-send:hover {
+      background: #d4694f;
+    }
+
+    .edit-ai-send.loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .edit-ai-send.loading::after {
+      content: '...';
+    }
+
+    .organize-tips {
+      padding: 12px 16px;
+      background: var(--sidebar);
+      border-radius: 8px;
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    /* 右侧栏 */
+    .sidebar-right {
+      width: 240px;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      flex-shrink: 0;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+
+    .panel-tabs {
+      display: flex;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-tab {
+      padding: 10px 14px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .panel-tab.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .panel-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      min-height: 0;
+    }
+
+    .glossary-item {
+      padding: 14px;
+      background: var(--sidebar);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .glossary-item:hover {
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+
+    .glossary-item .name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .glossary-item .aliases {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .glossary-item .source {
+      font-size: 12px;
+      color: var(--text-placeholder);
+      margin-top: 6px;
+    }
+
+    .tag-section {
+      margin-top: 24px;
+    }
+
+    .tag-section-title {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      padding: 8px 14px;
+      background: var(--sidebar);
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tag:hover {
+      background: var(--border);
+    }
+
+    /* 弹窗 */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: var(--surface);
+      border-radius: 16px;
+      width: 520px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.2s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .modal-overlay.active .modal {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      font-size: 20px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      border-radius: 6px;
+    }
+
+    .modal-close:hover {
+      background: var(--sidebar);
+    }
+
+    .modal-body {
+      padding: 24px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 48px;
+      padding: 0 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 16px;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-textarea {
+      width: 100%;
+      min-height: 120px;
+      padding: 12px 16px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      resize: vertical;
+    }
+
+    .form-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-hint {
+      font-size: 13px;
+      color: var(--text-placeholder);
+      margin-top: 6px;
+    }
+
+    /* 系统设置弹窗 */
+    .settings-section {
+      margin-bottom: 24px;
+    }
+
+    .settings-section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--secondary);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .settings-item:last-child {
+      border-bottom: none;
+    }
+
+    .settings-item-label {
+      font-size: 15px;
+      color: var(--text-primary);
+    }
+
+    .settings-item-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      padding: 12px 24px;
+      background: var(--secondary);
+      color: white;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 2000;
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .toast.success {
+      background: var(--accent);
+    }
+
+    .toast.warning {
+      background: var(--warning);
+      color: var(--text-primary);
+    }
+
+    .toast.active {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* 移动端 */
+    .mobile-layout {
+      display: none;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    .mobile-header {
+      padding: 16px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mobile-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--secondary);
+    }
+
+    .mobile-content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .mobile-footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+    }
+
+    .mobile-tab {
+      flex: 1;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+    }
+
+    .mobile-tab.active {
+      color: var(--primary);
+    }
+
+    .mobile-tab .icon {
+      font-size: 22px;
+    }
+
+    .mobile-card-list {
+      padding: 16px;
+    }
+
+    .mobile-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .mobile-card-title {
+      font-size: 16px;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+
+    .mobile-card-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .fab-create {
+      display: none;
+    }
+
+    @media (max-width: 900px) {
+      .desktop-layout {
+        display: none;
+      }
+      .mobile-layout {
+        display: flex;
+      }
+      .fab-create {
+        display: block;
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        border: none;
+        font-size: 28px;
+        box-shadow: 0 4px 16px rgba(224, 122, 95, 0.4);
+        cursor: pointer;
+      }
+    }
+
+    @media (min-width: 901px) {
+      .desktop-layout {
+        display: flex;
+      }
+      .mobile-layout {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toast" id="toast">保存成功</div>
+
+  <!-- 桌面端 -->
+  <div class="desktop-layout">
+    <!-- 左侧栏 -->
+    <div class="sidebar-left">
+      <div class="sidebar-header">
+        <div class="logo">
+          <span>📔</span>
+          <span>回忆录</span>
+        </div>
+      </div>
+
+      <div class="sidebar-actions">
+        <button class="btn btn-primary" onclick="openNewMemoryModal()">
+          <span>+</span>
+          <span>新建</span>
+        </button>
+      </div>
+
+      <div class="search-box">
+        <input type="text" class="search-input" placeholder="🔍 搜索素材...">
+      </div>
+
+      <div class="folder-list" id="columnList">
+        <div class="column-item expanded" data-column-id="1">
+          <div class="column-header expanded" onclick="toggleColumn(this)">
+            <span class="icon">▶</span>
+            <span class="name">童年</span>
+            <span class="count">2</span>
+            <div class="column-actions">
+              <button class="column-action-btn" onclick="editColumn(event, '童年')" title="编辑">✏️</button>
+              <button class="column-action-btn delete" onclick="deleteColumn(event, 1, '童年')" title="删除">🗑️</button>
+            </div>
+          </div>
+          <div class="column-input-wrapper">
+            <input type="text" class="column-name-input" value="童年" onkeydown="handleColumnInput(event, 1)">
+            <div class="column-input-actions">
+              <button class="btn btn-primary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="saveColumn(1)">保存</button>
+              <button class="btn btn-secondary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="cancelEditColumn(1)">取消</button>
+            </div>
+          </div>
+          <div class="memory-list">
+            <div class="memory-item active" onclick="selectMemory(this, '夏夜乘凉')">
+              <div class="content">
+                <span>🌙</span>
+                <span class="title">夏夜乘凉</span>
+                <div class="actions">
+                  <button class="memory-action-btn" onclick="editMemory(event, '夏夜乘凉')" title="编辑">✏️</button>
+                  <button class="memory-action-btn delete" onclick="deleteMemory(event, 1)" title="删除">🗑️</button>
+                </div>
+              </div>
+              <div class="meta">1985年</div>
+            </div>
+            <div class="memory-item" onclick="selectMemory(this, '过年')">
+              <div class="content">
+                <span>🧧</span>
+                <span class="title">过年</span>
+                <div class="actions">
+                  <button class="memory-action-btn" onclick="editMemory(event, '过年')" title="编辑">✏️</button>
+                  <button class="memory-action-btn delete" onclick="deleteMemory(event, 2)" title="删除">🗑️</button>
+                </div>
+              </div>
+              <div class="meta">1988年</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="column-item" data-column-id="2">
+          <div class="column-header" onclick="toggleColumn(this)">
+            <span class="icon">▶</span>
+            <span class="name">家庭</span>
+            <span class="count">1</span>
+            <div class="column-actions">
+              <button class="column-action-btn" onclick="editColumn(event, '家庭')" title="编辑">✏️</button>
+              <button class="column-action-btn delete" onclick="deleteColumn(event, 2, '家庭')" title="删除">🗑️</button>
+            </div>
+          </div>
+          <div class="column-input-wrapper">
+            <input type="text" class="column-name-input" value="家庭" onkeydown="handleColumnInput(event, 2)">
+            <div class="column-input-actions">
+              <button class="btn btn-primary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="saveColumn(2)">保存</button>
+              <button class="btn btn-secondary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="cancelEditColumn(2)">取消</button>
+            </div>
+          </div>
+          <div class="memory-list">
+            <div class="memory-item" onclick="selectMemory(this, '父亲')">
+              <div class="content">
+                <span>👴</span>
+                <span class="title">父亲的故事</span>
+                <div class="actions">
+                  <button class="memory-action-btn" onclick="editMemory(event, '父亲的故事')" title="编辑">✏️</button>
+                  <button class="memory-action-btn delete" onclick="deleteMemory(event, 3)" title="删除">🗑️</button>
+                </div>
+              </div>
+              <div class="meta">1970年</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="add-column-btn" onclick="showAddColumn()">
+          <span>+</span>
+          <span>新建栏目</span>
+        </button>
+
+        <div class="column-item" id="newColumnItem" style="display: none;">
+          <div class="column-input-wrapper">
+            <input type="text" class="column-name-input" id="newColumnName" placeholder="输入栏目名称" onkeydown="handleNewColumn(event)">
+            <div class="column-input-actions">
+              <button class="btn btn-primary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="createColumn()">创建</button>
+              <button class="btn btn-secondary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="cancelAddColumn()">取消</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer" style="flex-direction: column; gap: 8px; padding: 12px 20px;">
+        <div style="display: flex; justify-content: space-between; width: 100%;">
+          <span style="font-size: 13px; color: var(--text-secondary);">记忆碎片 · 3条</span>
+        </div>
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <div class="settings-entry" onclick="openGlossaryPage()" style="flex: 1; justify-content: center; background: var(--surface); border: 1px solid var(--border);">
+            <span>📚</span>
+            <span>名词库</span>
+          </div>
+          <div class="settings-entry" onclick="openSettingsModal()" style="flex: 1; justify-content: center; background: var(--surface); border: 1px solid var(--border);">
+            <span>⚙️</span>
+            <span>设置</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中间主区域 -->
+    <div class="main-content">
+      <!-- 顶部Tab切换 -->
+      <div class="main-tabs">
+        <div class="main-tab active" onclick="switchMainTab('chat', this)">
+          💬 采访区
+        </div>
+        <div class="main-tab" onclick="switchMainTab('organize', this)">
+          ✏️ 编辑区
+        </div>
+      </div>
+
+      <!-- 顶部工具栏（采访区） -->
+      <div class="main-header" id="chatHeader">
+        <div class="ai-mode-selector">
+          <span class="ai-mode-label">AI模式：</span>
+          <div class="ai-mode-buttons">
+            <button class="ai-mode-btn" onclick="setAIMode('L1')">记录</button>
+            <button class="ai-mode-btn" onclick="setAIMode('L2')">倾听</button>
+            <button class="ai-mode-btn active" onclick="setAIMode('L3')">互动</button>
+          </div>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="panel-container">
+        <!-- 采访区 -->
+        <div class="panel-view active" id="chatPanel">
+          <div class="chat-area" id="chatArea">
+            <div class="message message-ai">
+              <div class="message-avatar">🤖</div>
+              <div class="message-content">
+                <div class="message-text">听起来很温馨呢！那个年代夏夜乘凉是大家共同的记忆。你能跟我多说说你和邻居们一起乘凉的事吗？比如那时候院子里都有谁？</div>
+                <div class="follow-up-questions">
+                  <button class="follow-up-btn" onclick="askQuestion('那时候院子里经常有哪些邻居？')">那时候院子里经常有哪些邻居？</button>
+                  <button class="follow-up-btn" onclick="askQuestion('大家乘凉时都聊些什么话题？')">大家乘凉时都聊些什么话题？</button>
+                  <button class="follow-up-btn" onclick="askQuestion('有什么有趣的事让你印象特别深吗？')">有什么有趣的事让你印象特别深吗？</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="input-area">
+            <div class="input-box">
+              <div class="input-wrapper">
+                <textarea class="chat-input" id="chatInput" placeholder="写下你的回忆..." rows="1"></textarea>
+              </div>
+              <button class="send-btn" onclick="sendMessage()">➤</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 编辑区 -->
+        <div class="panel-view" id="organizePanel">
+          <div class="organize-area">
+            <!-- 顶部标题栏 -->
+            <div class="edit-header">
+              <input type="text" class="edit-title-input" id="editTitle" value="夏夜的星空与恐惧" placeholder="输入标题...">
+              <button class="save-btn" id="saveBtn" onclick="saveDocument()">
+                <span>💾</span>
+                <span>保存</span>
+              </button>
+            </div>
+
+            <!-- 正文编辑区 -->
+            <div class="edit-content-area">
+              <textarea class="edit-content" id="editContent" placeholder="开始输入正文...">那时候我还在上幼儿园，每到夏天的晚上，妈妈就会在院子里摆张小桌子，全家人围坐在一起乘凉。院子里种着一棵大槐树，树叶在晚风中沙沙作响，蚊子也少。
+
+邻居们也都喜欢出来乘凉，王刚一家就住在我家隔壁，他经常端着一把竹椅过来，和我爸爸聊天。那时候没有什么空调电扇，大家就靠一把蒲扇解暑。
+
+最让我难忘的是有一天下午，我听隔壁张奶奶讲了一个鬼故事，说村东头的茅房里有个白影子，吓得我晚上不敢一个人去上厕所。每次憋得不行了，才硬着头皮飞奔而去。有一次实在害怕，就哭着叫奶奶陪我去。奶奶总是笑着拿起蒲扇，一边给我扇风一边说："傻孩子，哪有什么鬼啊！"
+
+奶奶的蒲扇好像有魔力一样，只要她一扇，我就觉得凉快了许多，也不再那么害怕了。
+
+那时候的夏夜虽然简单，却充满了温情。大家都愿意走出屋子，在星空下畅聊，分享一天的见闻。如今想来，那样的夜晚是多么珍贵啊。</textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 编辑区AI调整悬浮气泡 -->
+    <div class="ai-float-bubble" id="aiFloatBubble">
+      <div class="ai-float-panel">
+        <div class="ai-float-header">
+          <span>AI调整助手</span>
+        </div>
+        <div class="ai-float-body">
+          <textarea class="ai-float-input" id="aiFloatInput" placeholder="输入指令调整内容，如：语气更抒情、增加细节..."></textarea>
+          <button class="ai-float-send" onclick="sendFloatCommand()">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右侧栏 -->
+    <div class="sidebar-right">
+      <div class="panel-header">
+        <span class="panel-title">📋 稿件属性</span>
+      </div>
+
+      <div class="panel-content" id="panelProperties" style="display: block;">
+        <!-- 时间信息 -->
+        <div class="property-section">
+          <div class="property-section-title">⏰ 时间信息</div>
+
+          <!-- 自然语言时间输入 -->
+          <div class="time-input-section">
+            <textarea class="time-natural-input" id="timeNaturalInput" placeholder="输入时间描述，如：1985年夏天、春节前一周、改革开放初期...">1985年夏天的一个傍晚</textarea>
+            <div class="time-analyze-actions">
+              <button class="time-analyze-btn" onclick="analyzeWithAI()">
+                <span>✨</span>
+                <span>AI分析</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- AI解析的时间属性（不可编辑） -->
+          <div class="time-attribute-section" id="timeAttributeSection">
+            <div class="time-attribute-label">🤖 时间属性（Markdown标签）</div>
+            <div class="time-attribute-display" id="timeAttributeDisplay">
+              <div class="time-attribute-item">
+                <span class="attr-label">date:</span>
+                <span class="attr-value" id="attrDate">1985-07-15</span>
+              </div>
+              <div class="time-attribute-item">
+                <span class="attr-label">period:</span>
+                <span class="attr-value" id="attrPeriod">1985年夏季</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 标签列表 -->
+        <div class="property-section">
+          <div class="property-section-title">🏷️ 标签</div>
+          <div class="tags-container" id="tagsContainer">
+            <span class="tag" onclick="removeTag(this)">童年 ×</span>
+            <span class="tag" onclick="removeTag(this)">邻里 ×</span>
+            <span class="tag" onclick="removeTag(this)">温馨 ×</span>
+          </div>
+          <div class="tag-add-row">
+            <input type="text" class="tag-input" id="tagInput" placeholder="输入标签后回车添加">
+          </div>
+          <div class="property-hint">最多 10 个标签，已添加 <span id="tagCount">3</span> / 10</div>
+        </div>
+
+        <!-- 本文名词库 -->
+        <div class="property-section">
+          <div class="property-section-title">👤 本文名词库</div>
+          <div class="doc-glossary-list" id="docGlossaryList">
+            <div class="doc-glossary-item" onclick="toggleGlossaryItem(this)">
+              <div class="doc-glossary-header">
+                <span>👤</span>
+                <span class="doc-glossary-name">王刚</span>
+                <span class="doc-glossary-expand">▶</span>
+              </div>
+              <div class="doc-glossary-detail">
+                <div class="doc-glossary-field">
+                  <span class="field-label">别名：</span>
+                  <span class="field-value">王建军</span>
+                </div>
+                <div class="doc-glossary-field">
+                  <span class="field-label">称谓：</span>
+                  <span class="field-value">王科长</span>
+                </div>
+                <div class="doc-glossary-actions">
+                  <button class="doc-glossary-btn" onclick="event.stopPropagation(); editGlossaryItem('王刚')">编辑</button>
+                  <button class="doc-glossary-btn delete" onclick="event.stopPropagation(); deleteGlossaryItem('王刚')">删除</button>
+                </div>
+              </div>
+            </div>
+            <div class="doc-glossary-item" onclick="toggleGlossaryItem(this)">
+              <div class="doc-glossary-header">
+                <span>👤</span>
+                <span class="doc-glossary-name">李氏</span>
+                <span class="doc-glossary-expand">▶</span>
+              </div>
+              <div class="doc-glossary-detail">
+                <div class="doc-glossary-field">
+                  <span class="field-label">别名：</span>
+                  <span class="field-value">李桂花</span>
+                </div>
+                <div class="doc-glossary-field">
+                  <span class="field-label">称谓：</span>
+                  <span class="field-value">奶奶</span>
+                </div>
+                <div class="doc-glossary-actions">
+                  <button class="doc-glossary-btn" onclick="event.stopPropagation(); editGlossaryItem('李氏')">编辑</button>
+                  <button class="doc-glossary-btn delete" onclick="event.stopPropagation(); deleteGlossaryItem('李氏')">删除</button>
+                </div>
+              </div>
+            </div>
+            <div class="doc-glossary-item" onclick="toggleGlossaryItem(this)">
+              <div class="doc-glossary-header">
+                <span>📍</span>
+                <span class="doc-glossary-name">安徽砀山</span>
+                <span class="doc-glossary-expand">▶</span>
+              </div>
+              <div class="doc-glossary-detail">
+                <div class="doc-glossary-field">
+                  <span class="field-label">曾用名：</span>
+                  <span class="field-value">砀山</span>
+                </div>
+                <div class="doc-glossary-actions">
+                  <button class="doc-glossary-btn" onclick="event.stopPropagation(); editGlossaryItem('安徽砀山')">编辑</button>
+                  <button class="doc-glossary-btn delete" onclick="event.stopPropagation(); deleteGlossaryItem('安徽砀山')">删除</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 移动端 -->
+  <div class="mobile-layout">
+    <div class="mobile-header">
+      <div class="mobile-title">📔 回忆录</div>
+      <button class="btn-icon" onclick="openSettingsModal()">⚙️</button>
+    </div>
+
+    <div class="mobile-content">
+      <div class="mobile-card-list">
+        <div class="mobile-card">
+          <div class="mobile-card-title">🌙 夏夜乘凉</div>
+          <div class="mobile-card-meta">童年 · 1985年</div>
+        </div>
+        <div class="mobile-card">
+          <div class="mobile-card-title">🧧 过年</div>
+          <div class="mobile-card-meta">童年 · 1988年</div>
+        </div>
+        <div class="mobile-card">
+          <div class="mobile-card-title">👴 父亲的故事</div>
+          <div class="mobile-card-meta">家庭 · 1970年</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="fab-create" onclick="openNewMemoryModal()">+</button>
+
+    <div class="mobile-footer">
+      <button class="mobile-tab active">
+        <span class="icon">📋</span>
+        <span>列表</span>
+      </button>
+      <button class="mobile-tab">
+        <span class="icon">💬</span>
+        <span>采访</span>
+      </button>
+      <button class="mobile-tab">
+        <span class="icon">✏️</span>
+        <span>编辑</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 新建素材弹窗 -->
+  <div class="modal-overlay" id="newMemoryModal">
+    <div class="modal" style="width: 480px;">
+      <div class="modal-header">
+        <span class="modal-title">📝 新建记忆素材</span>
+        <button class="modal-close" onclick="closeModal('newMemoryModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- 步骤1：选择栏目 -->
+        <div id="step1Column">
+          <div class="form-group">
+            <label class="form-label">选择栏目 *</label>
+            <select class="form-input" id="selectColumn" onchange="onColumnChange()">
+              <option value="">-- 请选择栏目 --</option>
+              <option value="童年">童年</option>
+              <option value="家庭">家庭</option>
+            </select>
+          </div>
+          <div style="text-align: center; padding: 12px 0; color: var(--text-secondary); font-size: 14px;">
+            或
+          </div>
+          <button class="add-column-btn" onclick="showNewColumnInModal()" style="border: 1px dashed var(--primary); color: var(--primary); background: rgba(224, 122, 95, 0.05);">
+            <span>+</span>
+            <span>创建新栏目</span>
+          </button>
+          <div id="newColumnInModal" style="display: none; margin-top: 12px;">
+            <div class="form-group">
+              <label class="form-label">新栏目名称</label>
+              <input type="text" class="form-input" id="newColumnNameInput" placeholder="输入栏目名称">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="createColumnFromModal()">确认创建</button>
+          </div>
+        </div>
+        <!-- 步骤2：填写素材信息 -->
+        <div id="step2Info" style="display: none;">
+          <div class="form-group">
+            <label class="form-label">素材标题 *</label>
+            <input type="text" class="form-input" id="newMemoryTitle" placeholder="例如：夏夜乘凉">
+          </div>
+          <div class="form-group">
+            <label class="form-label">记忆时间（可选）</label>
+            <input type="text" class="form-input" id="newMemoryDate" placeholder="例如：1985年 或 80年代">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer" id="step1Footer">
+        <button class="btn btn-secondary" onclick="closeModal('newMemoryModal')">取消</button>
+        <button class="btn btn-primary" onclick="goToStep2()">下一步</button>
+      </div>
+      <div class="modal-footer" id="step2Footer" style="display: none;">
+        <button class="btn btn-secondary" onclick="backToStep1()">上一步</button>
+        <button class="btn btn-primary" onclick="createMemory()">创建</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除确认弹窗 -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal" style="width: 400px;">
+      <div class="modal-header">
+        <span class="modal-title" id="confirmTitle">⚠️ 确认操作</span>
+        <button class="modal-close" onclick="closeModal('confirmModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage" style="font-size: 15px; color: var(--text-primary);">确定要执行此操作吗？</p>
+        <p id="confirmWarning" style="font-size: 13px; color: var(--warning); margin-top: 8px; display: none;"></p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('confirmModal')">取消</button>
+        <button class="btn btn-primary" id="confirmBtn" onclick="confirmAction()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 名词确认弹窗 -->
+  <div class="modal-overlay" id="nounConfirmModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">📋 名词确认</span>
+        <button class="modal-close" onclick="closeModal('nounConfirmModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 16px; color: var(--text-secondary);">发现以下需要确认的信息：</p>
+
+        <div style="background: var(--sidebar); border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+          <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">👤 "王科长"</div>
+          <div style="font-size: 14px; color: var(--text-primary); margin-bottom: 12px;">原文：那时候王科长经常来我们家玩</div>
+          <input type="text" class="form-input" style="margin-bottom: 8px;" placeholder="填写全名，如：王建军">
+          <input type="text" class="form-input" placeholder="别名/称谓（可选），如：王科长">
+        </div>
+
+        <div style="background: var(--sidebar); border-radius: 12px; padding: 16px;">
+          <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">📍 "老家"</div>
+          <div style="font-size: 14px; color: var(--text-primary); margin-bottom: 12px;">原文：我小时候在老家念书</div>
+          <input type="text" class="form-input" placeholder="填写全称，如：安徽砀山">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('nounConfirmModal')">暂不处理</button>
+        <button class="btn btn-primary" onclick="confirmNouns()">全部确认入库</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 名词详情弹窗 -->
+  <div class="modal-overlay" id="glossaryDetailModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title" id="glossaryDetailTitle">📋 名词详情</span>
+        <button class="modal-close" onclick="closeModal('glossaryDetailModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">标准名称</label>
+          <input type="text" class="form-input" id="glossaryStandardName" placeholder="标准人名/地名">
+        </div>
+        <div class="form-group">
+          <label class="form-label">别名/曾用名</label>
+          <input type="text" class="form-input" id="glossaryAliases" placeholder="用逗号分隔，如：王建军，小王">
+        </div>
+        <div class="form-group">
+          <label class="form-label">常用称谓</label>
+          <input type="text" class="form-input" id="glossaryAddresses" placeholder="用逗号分隔，如：王科长，老王">
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <textarea class="form-textarea" id="glossaryNotes" placeholder="其他补充信息..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('glossaryDetailModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveGlossary()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 系统设置弹窗 -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal" style="width: 640px; max-height: 85vh;">
+      <div class="modal-header">
+        <span class="modal-title">⚙️ 系统设置</span>
+        <button class="modal-close" onclick="closeModal('settingsModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-section">
+          <div class="settings-section-title">🔑 AI API 设置</div>
+          <div class="form-group">
+            <label class="form-label">API 服务地址</label>
+            <input type="text" class="form-input" id="apiEndpoint" value="api.deepseek.com/v1/chat/completions" placeholder="如：api.deepseek.com/v1/chat/completions">
+          </div>
+          <div class="form-group">
+            <label class="form-label">API 密钥</label>
+            <input type="password" class="form-input" id="apiKey" value="sk-abfaa4d87f464ff39924bd46f1c00b15" placeholder="输入您的API密钥">
+            <div class="form-hint">密钥仅本地存储，不会同步至服务器</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">默认 AI 模式</label>
+            <select class="form-input" style="cursor: pointer;">
+              <option value="L1">记录档 - 仅回复收到</option>
+              <option value="L2">倾听档 - 简短共情</option>
+              <option value="L3" selected>互动档 - 深度引导</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">💬 提示词微调</div>
+          <div class="settings-item" style="border-bottom: none; padding: 8px 0;">
+            <div>
+              <div class="settings-item-label">AI 整理行为规范</div>
+              <div class="settings-item-desc">点击右侧按钮可修改提示词模板</div>
+            </div>
+            <button class="btn btn-secondary" style="height: 36px; font-size: 13px;" onclick="openPromptEditor()">修改</button>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title"> GitHub 同步</div>
+          <div class="settings-item">
+            <div>
+              <div class="settings-item-label">已连接账户</div>
+              <div class="settings-item-desc">github_username / memoir-repo</div>
+            </div>
+            <button class="btn btn-secondary" style="height: 36px; font-size: 13px;">断开</button>
+          </div>
+          <div class="settings-item">
+            <div>
+              <div class="settings-item-label">自动同步</div>
+              <div class="settings-item-desc">编辑后自动同步到 GitHub</div>
+            </div>
+            <label style="position: relative; width: 48px; height: 26px; cursor: pointer;">
+              <input type="checkbox" checked style="display: none;">
+              <span style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--primary); border-radius: 13px; transition: 0.2s;"></span>
+              <span style="position: absolute; top: 2px; left: 24px; width: 22px; height: 22px; background: white; border-radius: 50%; transition: 0.2s;"></span>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">📝 命名规则</div>
+          <div class="form-group">
+            <label class="form-label">素材分组命名规范</label>
+            <input type="text" class="form-input" value="{category}/{title}_{date}">
+            <div class="form-hint">如：童年/夏夜乘凉_1985.md</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('settingsModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提示词编辑器弹窗 -->
+  <div class="modal-overlay" id="promptEditorModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">💬 提示词微调</span>
+        <button class="modal-close" onclick="closeModal('promptEditorModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">当前提示词</label>
+          <textarea class="form-textarea" id="promptTemplate">将口语化对话整理成标准书面叙事，保留核心情感与细节，不做过度美化</textarea>
+          <div class="form-hint">定义AI整理素材时的默认行为规范</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">指令输入（发送微调）</label>
+          <input type="text" class="form-input" id="promptInstruction" placeholder="输入修改指令，如：增加更多情感描写">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('promptEditorModal')">取消</button>
+        <button class="btn btn-primary" onclick="sendPromptInstruction()">发送并应用</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentAIMode = 'L3';
+    let currentMemory = '夏夜乘凉';
+    let currentMainTab = 'chat';
+    let pendingDeleteColumn = null;
+    let pendingDeleteMemory = null;
+
+    // 栏目管理
+    function toggleColumn(element) {
+      const columnItem = element.parentElement;
+      columnItem.classList.toggle('expanded');
+      element.classList.toggle('expanded');
+    }
+
+    function editColumn(event, name) {
+      event.stopPropagation();
+      const columnItem = event.target.closest('.column-item');
+      columnItem.classList.add('editing');
+      const input = columnItem.querySelector('.column-name-input');
+      input.focus();
+      input.select();
+    }
+
+    function handleColumnInput(event, columnId) {
+      if (event.key === 'Enter') {
+        saveColumn(columnId);
+      } else if (event.key === 'Escape') {
+        cancelEditColumn(columnId);
+      }
+    }
+
+    function saveColumn(columnId) {
+      const columnItem = document.querySelector(`[data-column-id="${columnId}"]`);
+      const input = columnItem.querySelector('.column-name-input');
+      const newName = input.value.trim();
+
+      if (!newName) {
+        showToast('栏目名称不能为空', 'warning');
+        return;
+      }
+
+      columnItem.classList.remove('editing');
+      columnItem.querySelector('.column-header .name').textContent = newName;
+      showToast('栏目已更新', 'success');
+    }
+
+    function cancelEditColumn(columnId) {
+      const columnItem = document.querySelector(`[data-column-id="${columnId}"]`);
+      columnItem.classList.remove('editing');
+    }
+
+    function showAddColumn() {
+      document.getElementById('newColumnItem').style.display = 'block';
+      const input = document.getElementById('newColumnName');
+      input.focus();
+    }
+
+    function handleNewColumn(event) {
+      if (event.key === 'Enter') {
+        createColumn();
+      } else if (event.key === 'Escape') {
+        cancelAddColumn();
+      }
+    }
+
+    function createColumn() {
+      const name = document.getElementById('newColumnName').value.trim();
+      if (!name) {
+        showToast('请输入栏目名称', 'warning');
+        return;
+      }
+
+      const columnList = document.getElementById('columnList');
+      const newColumnHTML = `
+        <div class="column-item" data-column-id="${Date.now()}">
+          <div class="column-header expanded" onclick="toggleColumn(this)">
+            <span class="icon">▶</span>
+            <span class="name">${escapeHtml(name)}</span>
+            <span class="count">0</span>
+            <div class="column-actions">
+              <button class="column-action-btn" onclick="editColumn(event, '${escapeHtml(name)}')" title="编辑">✏️</button>
+              <button class="column-action-btn delete" onclick="deleteColumn(event, ${Date.now()}, '${escapeHtml(name)}')" title="删除">🗑️</button>
+            </div>
+          </div>
+          <div class="column-input-wrapper">
+            <input type="text" class="column-name-input" value="${escapeHtml(name)}" onkeydown="handleColumnInput(event, ${Date.now()})">
+            <div class="column-input-actions">
+              <button class="btn btn-primary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="saveColumn(${Date.now()})">保存</button>
+              <button class="btn btn-secondary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="cancelEditColumn(${Date.now()})">取消</button>
+            </div>
+          </div>
+          <div class="memory-list"></div>
+        </div>
+      `;
+
+      const addBtn = document.querySelector('.add-column-btn');
+      addBtn.insertAdjacentHTML('beforebegin', newColumnHTML);
+      cancelAddColumn();
+      updateColumnSelect();
+      showToast('栏目已创建：' + name, 'success');
+    }
+
+    function cancelAddColumn() {
+      document.getElementById('newColumnItem').style.display = 'none';
+      document.getElementById('newColumnName').value = '';
+    }
+
+    function deleteColumn(event, columnId, name) {
+      event.stopPropagation();
+      const columnItem = event.target.closest('.column-item');
+      const memories = columnItem.querySelectorAll('.memory-item');
+      const memoryCount = memories.length;
+
+      if (memoryCount > 0) {
+        document.getElementById('confirmTitle').textContent = '⚠️ 删除栏目';
+        document.getElementById('confirmMessage').textContent = `栏目"${name}"中包含 ${memoryCount} 个素材，删除栏目将同时删除所有素材。`;
+        document.getElementById('confirmWarning').style.display = 'block';
+        document.getElementById('confirmWarning').textContent = '此操作不可撤销！';
+        document.getElementById('confirmBtn').style.background = '#e74c3c';
+      } else {
+        document.getElementById('confirmTitle').textContent = '⚠️ 删除栏目';
+        document.getElementById('confirmMessage').textContent = `确定要删除栏目"${name}"吗？`;
+        document.getElementById('confirmWarning').style.display = 'none';
+        document.getElementById('confirmBtn').style.background = '';
+      }
+
+      pendingDeleteColumn = { id: columnId, name: name, element: columnItem };
+      openModal('confirmModal');
+    }
+
+    function confirmAction() {
+      if (pendingDeleteColumn) {
+        pendingDeleteColumn.element.remove();
+        updateColumnSelect();
+        showToast('栏目已删除：' + pendingDeleteColumn.name, 'success');
+        pendingDeleteColumn = null;
+      } else if (pendingDeleteMemory) {
+        pendingDeleteMemory.element.remove();
+        updateMemoryCounts();
+        showToast('素材已删除：' + pendingDeleteMemory.name, 'success');
+        pendingDeleteMemory = null;
+      }
+      closeModal('confirmModal');
+    }
+
+    // 素材管理
+    function editMemory(event, name) {
+      event.stopPropagation();
+      showToast('编辑素材：' + name, 'success');
+    }
+
+    function deleteMemory(event, memoryId) {
+      event.stopPropagation();
+      const memoryItem = event.target.closest('.memory-item');
+      document.getElementById('confirmTitle').textContent = '⚠️ 删除素材';
+      document.getElementById('confirmMessage').textContent = `确定要删除素材"${name}"吗？`;
+      document.getElementById('confirmWarning').style.display = 'none';
+      document.getElementById('confirmBtn').style.background = '#e74c3c';
+      pendingDeleteMemory = { id: memoryId, name: name, element: memoryItem };
+      openModal('confirmModal');
+    }
+
+    function updateMemoryCounts() {
+      document.querySelectorAll('.column-item').forEach(item => {
+        const count = item.querySelectorAll('.memory-item').length;
+        const countEl = item.querySelector('.column-header .count');
+        if (countEl) {
+          countEl.textContent = count;
+        }
+      });
+    }
+
+    function updateColumnSelect() {
+      const select = document.getElementById('selectColumn');
+      const columns = document.querySelectorAll('.column-item[data-column-id]');
+      select.innerHTML = '<option value="">-- 请选择栏目 --</option>';
+      columns.forEach(col => {
+        const name = col.querySelector('.column-header .name').textContent;
+        select.innerHTML += `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`;
+      });
+    }
+
+    // 新建素材流程
+    let selectedColumnForNew = '';
+
+    function openNewMemoryModal() {
+      document.getElementById('step1Column').style.display = 'block';
+      document.getElementById('step2Info').style.display = 'none';
+      document.getElementById('step1Footer').style.display = 'flex';
+      document.getElementById('step2Footer').style.display = 'none';
+      document.getElementById('newColumnInModal').style.display = 'none';
+      document.getElementById('selectColumn').value = '';
+      document.getElementById('newMemoryTitle').value = '';
+      document.getElementById('newMemoryDate').value = '';
+      selectedColumnForNew = '';
+      updateColumnSelect();
+      openModal('newMemoryModal');
+    }
+
+    function onColumnChange() {
+      const select = document.getElementById('selectColumn');
+      selectedColumnForNew = select.value;
+    }
+
+    function showNewColumnInModal() {
+      document.getElementById('newColumnInModal').style.display = 'block';
+      document.getElementById('newColumnNameInput').focus();
+    }
+
+    function createColumnFromModal() {
+      const name = document.getElementById('newColumnNameInput').value.trim();
+      if (!name) {
+        showToast('请输入栏目名称', 'warning');
+        return;
+      }
+
+      const columnList = document.getElementById('columnList');
+      const columnId = Date.now();
+      const newColumnHTML = `
+        <div class="column-item expanded" data-column-id="${columnId}">
+          <div class="column-header expanded" onclick="toggleColumn(this)">
+            <span class="icon">▶</span>
+            <span class="name">${escapeHtml(name)}</span>
+            <span class="count">0</span>
+            <div class="column-actions">
+              <button class="column-action-btn" onclick="editColumn(event, '${escapeHtml(name)}')" title="编辑">✏️</button>
+              <button class="column-action-btn delete" onclick="deleteColumn(event, ${columnId}, '${escapeHtml(name)}')" title="删除">🗑️</button>
+            </div>
+          </div>
+          <div class="column-input-wrapper">
+            <input type="text" class="column-name-input" value="${escapeHtml(name)}" onkeydown="handleColumnInput(event, ${columnId})">
+            <div class="column-input-actions">
+              <button class="btn btn-primary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="saveColumn(${columnId})">保存</button>
+              <button class="btn btn-secondary" style="height: 28px; padding: 0 12px; font-size: 12px;" onclick="cancelEditColumn(${columnId})">取消</button>
+            </div>
+          </div>
+          <div class="memory-list"></div>
+        </div>
+      `;
+
+      const addBtn = document.querySelector('.add-column-btn');
+      addBtn.insertAdjacentHTML('beforebegin', newColumnHTML);
+
+      document.getElementById('newColumnInModal').style.display = 'none';
+      document.getElementById('newColumnNameInput').value = '';
+
+      selectedColumnForNew = name;
+      updateColumnSelect();
+      document.getElementById('selectColumn').value = name;
+
+      showToast('栏目已创建：' + name, 'success');
+    }
+
+    function goToStep2() {
+      const select = document.getElementById('selectColumn');
+      if (!select.value) {
+        showToast('请选择或创建栏目', 'warning');
+        return;
+      }
+
+      document.getElementById('step1Column').style.display = 'none';
+      document.getElementById('step2Info').style.display = 'block';
+      document.getElementById('step1Footer').style.display = 'none';
+      document.getElementById('step2Footer').style.display = 'flex';
+      document.getElementById('newMemoryTitle').focus();
+    }
+
+    function backToStep1() {
+      document.getElementById('step1Column').style.display = 'block';
+      document.getElementById('step2Info').style.display = 'none';
+      document.getElementById('step1Footer').style.display = 'flex';
+      document.getElementById('step2Footer').style.display = 'none';
+    }
+
+    function createMemory() {
+      const title = document.getElementById('newMemoryTitle').value.trim();
+      const date = document.getElementById('newMemoryDate').value.trim();
+      const column = document.getElementById('selectColumn').value;
+
+      if (!title) {
+        showToast('请输入素材标题', 'warning');
+        return;
+      }
+
+      if (!column) {
+        showToast('请选择栏目', 'warning');
+        return;
+      }
+
+      let targetColumn = null;
+      document.querySelectorAll('.column-item').forEach(item => {
+        if (item.querySelector('.column-header .name').textContent === column) {
+          targetColumn = item;
+        }
+      });
+
+      if (targetColumn) {
+        const memoryList = targetColumn.querySelector('.memory-list');
+        const newMemoryHTML = `
+          <div class="memory-item" onclick="selectMemory(this, '${escapeHtml(title)}')">
+            <div class="content">
+              <span>📄</span>
+              <span class="title">${escapeHtml(title)}</span>
+              <div class="actions">
+                <button class="memory-action-btn" onclick="editMemory(event, '${escapeHtml(title)}')" title="编辑">✏️</button>
+                <button class="memory-action-btn delete" onclick="deleteMemory(event, ${Date.now()})" title="删除">🗑️</button>
+              </div>
+            </div>
+            <div class="meta">${escapeHtml(date) || '时间未指定'}</div>
+          </div>
+        `;
+        memoryList.insertAdjacentHTML('beforeend', newMemoryHTML);
+
+        const countEl = targetColumn.querySelector('.column-header .count');
+        if (countEl) {
+          countEl.textContent = parseInt(countEl.textContent) + 1;
+        }
+      }
+
+      closeModal('newMemoryModal');
+      showToast('素材已创建：' + title, 'success');
+
+      document.getElementById('newMemoryTitle').value = '';
+      document.getElementById('newMemoryDate').value = '';
+    }
+
+    function selectMemory(element, title) {
+      document.querySelectorAll('.memory-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      element.classList.add('active');
+      currentMemory = title;
+      showToast('已加载：' + title);
+    }
+
+    function switchMainTab(tab, element) {
+      currentMainTab = tab;
+      document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+      element.classList.add('active');
+
+      document.getElementById('chatPanel').classList.remove('active');
+      document.getElementById('organizePanel').classList.remove('active');
+      document.getElementById('chatHeader').classList.add('hidden');
+      document.querySelector('.ai-mode-selector').classList.add('hidden');
+
+      const aiBubble = document.getElementById('aiFloatBubble');
+
+      if (tab === 'chat') {
+        document.getElementById('chatPanel').classList.add('active');
+        document.getElementById('chatHeader').classList.remove('hidden');
+        document.querySelector('.ai-mode-selector').classList.remove('hidden');
+        aiBubble.classList.remove('active');
+      } else {
+        document.getElementById('organizePanel').classList.add('active');
+        aiBubble.classList.add('active');
+        showToast('所有内容自动保存', 'success');
+      }
+    }
+
+    function setAIMode(mode) {
+      currentAIMode = mode;
+      document.querySelectorAll('.ai-mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      const modeNames = { L1: '记录', L2: '倾听', L3: '互动' };
+      showToast('已切换至' + modeNames[mode] + '模式', 'success');
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('chatInput');
+      const message = input.value.trim();
+
+      if (!message) return;
+
+      const chatArea = document.getElementById('chatArea');
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message message-user';
+      userMsg.innerHTML = `
+        <div class="message-avatar">👤</div>
+        <div class="message-content">
+          <div class="message-text">${escapeHtml(message)}</div>
+        </div>
+      `;
+      chatArea.appendChild(userMsg);
+
+      input.value = '';
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      setTimeout(() => {
+        const aiResponses = {
+          L1: ['收到。', '好的，请继续。'],
+          L2: ['听起来很温馨。', '那确实很难忘。', '真是个美好的回忆。'],
+          L3: [
+            '听起来很温馨呢！那个年代夏夜乘凉是大家共同的记忆。你能跟我多说说你和邻居们一起乘凉的事吗？比如那时候院子里都有谁？',
+            '很动人的回忆！那时候的邻里关系确实很亲近。你还记得当时院子里经常有哪些人吗？大家乘凉时都聊些什么呢？',
+            '真有意思！那个年代晚上乘凉是大家最主要的消遣方式。你能告诉我，当时让你印象最深刻的是哪一次乘凉经历吗？'
+          ]
+        };
+
+        const responses = aiResponses[currentAIMode];
+        const response = responses[Math.floor(Math.random() * responses.length)];
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message message-ai';
+
+        let followUpHTML = '';
+        if (currentAIMode === 'L3') {
+          followUpHTML = `
+            <div class="follow-up-questions">
+              <button class="follow-up-btn" onclick="askQuestion('那时候院子里经常有哪些邻居？')">那时候院子里经常有哪些邻居？</button>
+              <button class="follow-up-btn" onclick="askQuestion('大家乘凉时都聊些什么话题？')">大家乘凉时都聊些什么话题？</button>
+              <button class="follow-up-btn" onclick="askQuestion('有什么有趣的事让你印象特别深吗？')">有什么有趣的事让你印象特别深吗？</button>
+            </div>
+          `;
+        }
+
+        aiMsg.innerHTML = `
+          <div class="message-avatar">🤖</div>
+          <div class="message-content">
+            <div class="message-text">${response}</div>
+            ${followUpHTML}
+          </div>
+        `;
+        chatArea.appendChild(aiMsg);
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        if (currentAIMode !== 'L1' && Math.random() > 0.5) {
+          setTimeout(() => {
+            openModal('nounConfirmModal');
+          }, 1500);
+        }
+      }, 800);
+    }
+
+    function askQuestion(question) {
+      const chatArea = document.getElementById('chatArea');
+
+      const userMsg = document.createElement('div');
+      userMsg.className = 'message message-user';
+      userMsg.innerHTML = `
+        <div class="message-avatar">👤</div>
+        <div class="message-content">
+          <div class="message-text">${question}</div>
+        </div>
+      `;
+      chatArea.appendChild(userMsg);
+      chatArea.scrollTop = chatArea.scrollHeight;
+
+      setTimeout(() => {
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'message message-ai';
+        aiMsg.innerHTML = `
+          <div class="message-avatar">🤖</div>
+          <div class="message-content">
+            <div class="message-text">这是个很好的问题！让我想想... ${question} 这个问题确实能帮我们回忆起更多细节。你能详细说说吗？</div>
+          </div>
+        `;
+        chatArea.appendChild(aiMsg);
+        chatArea.scrollTop = chatArea.scrollHeight;
+      }, 1000);
+    }
+
+    function showGlossaryDetail(name) {
+      const glossaryData = {
+        '王刚': { standardName: '王刚', aliases: '王建军', addresses: '王科长, 老王', notes: '邻居，曾在县医院工作' },
+        '李氏': { standardName: '李氏', aliases: '李桂花', addresses: '奶奶, 李婆婆', notes: '祖母' },
+        '安徽砀山': { standardName: '安徽砀山', aliases: '砀山', addresses: '', notes: '老家地址' }
+      };
+
+      const data = glossaryData[name] || { standardName: name, aliases: '', addresses: '', notes: '' };
+
+      document.getElementById('glossaryDetailTitle').textContent = '📋 ' + name;
+      document.getElementById('glossaryStandardName').value = data.standardName;
+      document.getElementById('glossaryAliases').value = data.aliases;
+      document.getElementById('glossaryAddresses').value = data.addresses;
+      document.getElementById('glossaryNotes').value = data.notes;
+
+      openModal('glossaryDetailModal');
+    }
+
+    function saveGlossary() {
+      closeModal('glossaryDetailModal');
+      showToast('名词已保存', 'success');
+    }
+
+    function switchTab(element, tab) {
+      document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+      element.classList.add('active');
+
+      document.getElementById('panelGlossary').style.display = tab === 'glossary' ? 'block' : 'none';
+      document.getElementById('panelTags').style.display = tab === 'tags' ? 'block' : 'none';
+    }
+
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function openSettingsModal() {
+      openModal('settingsModal');
+    }
+
+    function confirmNouns() {
+      closeModal('nounConfirmModal');
+      showToast('已确认入库：2个名词', 'success');
+    }
+
+    function saveSettings() {
+      closeModal('settingsModal');
+      showToast('设置已保存', 'success');
+    }
+
+    function normalizeTime() {
+      const timeInput = document.getElementById('organizeTime');
+      const original = timeInput.value.trim();
+      if (!original) return;
+
+      const normalizations = {
+        '85年': '1985年', '85': '1985年',
+        '八五年': '1985年', '1985': '1985年',
+        '八零年代': '1980年代', '80年代': '1980年代',
+        '小时候': '', '很小的时候': ''
+      };
+
+      let normalized = original;
+      for (const [key, value] of Object.entries(normalizations)) {
+        if (original.includes(key)) {
+          normalized = value;
+          break;
+        }
+      }
+
+      if (normalized !== original) {
+        timeInput.value = normalized;
+        showToast('已规范化：' + normalized, 'success');
+      }
+    }
+
+    function normalizePeriod() {
+      const periodInput = document.getElementById('organizePeriod');
+      const original = periodInput.value.trim();
+      if (!original) return;
+
+      const normalizations = {
+        '幼儿园': '幼儿园时期', '学前': '幼儿园时期', '学前班': '幼儿园时期',
+        '小学': '小学时期', '中学': '中学时期', '高中': '高中时期',
+        '大学': '大学时期', '参加工作': '参加工作后',
+        '年轻': '年轻时', '年轻时': '年轻时'
+      };
+
+      let normalized = original;
+      for (const [key, value] of Object.entries(normalizations)) {
+        if (original.includes(key)) {
+          normalized = value;
+          break;
+        }
+      }
+
+      if (normalized !== original) {
+        periodInput.value = normalized;
+        showToast('已规范化：' + normalized, 'success');
+      }
+    }
+
+    function openPromptEditor() {
+      closeModal('settingsModal');
+      openModal('promptEditorModal');
+    }
+
+    function sendPromptInstruction() {
+      const instruction = document.getElementById('promptInstruction').value.trim();
+      if (!instruction) {
+        showToast('请输入修改指令', 'warning');
+        return;
+      }
+
+      closeModal('promptEditorModal');
+      showToast('已发送指令给AI，正在微调提示词...', 'success');
+      document.getElementById('promptInstruction').value = '';
+    }
+
+    function openVersionHistory() {
+      openModal('versionHistoryModal');
+    }
+
+    function restoreVersion(version) {
+      closeModal('versionHistoryModal');
+      showToast('已恢复到版本：' + version, 'success');
+    }
+
+    function sendEditAICommand() {
+      const input = document.getElementById('editAIInput');
+      const message = input.value.trim();
+      if (!message) return;
+
+      const history = document.getElementById('editAIHistory');
+      const userMsg = document.createElement('div');
+      userMsg.className = 'edit-ai-msg user';
+      userMsg.innerHTML = '<span class="edit-ai-time">' + getCurrentTime() + '</span>' + escapeHtml(message);
+      history.appendChild(userMsg);
+
+      input.value = '';
+      history.scrollTop = history.scrollHeight;
+
+      const sendBtn = document.getElementById('editAISend');
+      sendBtn.classList.add('loading');
+
+      setTimeout(() => {
+        sendBtn.classList.remove('loading');
+
+        const aiResponses = [
+          '已根据您的指令调整文章风格，变得更加抒情了。',
+          '好的，我已优化了表述方式，现在更加流畅自然。',
+          '已增加更多细节描写，让场景更加生动。',
+          '调整完成，语气更加温馨感人。'
+        ];
+        const response = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'edit-ai-msg ai';
+        aiMsg.textContent = response;
+        history.appendChild(aiMsg);
+        history.scrollTop = history.scrollHeight;
+
+        showToast('风格调整已应用', 'success');
+      }, 1200);
+    }
+
+    function clearEditAIChat() {
+      const history = document.getElementById('editAIHistory');
+      history.innerHTML = '<div class="edit-ai-msg ai">对话已清空。您可以继续输入新的指令。</div>';
+    }
+
+    function editGlobalGlossary(name) {
+      showGlossaryDetail(name);
+    }
+
+    function addGlobalGlossary() {
+      document.getElementById('glossaryDetailTitle').textContent = '📋 新增名词';
+      document.getElementById('glossaryStandardName').value = '';
+      document.getElementById('glossaryAliases').value = '';
+      document.getElementById('glossaryAddresses').value = '';
+      document.getElementById('glossaryNotes').value = '';
+      openModal('glossaryDetailModal');
+    }
+
+    function getCurrentTime() {
+      const now = new Date();
+      return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+
+    function openGlossaryPage() {
+      document.getElementById('glossaryPage').classList.add('active');
+      renderGlossaryList();
+    }
+
+    function closeGlossaryPage() {
+      document.getElementById('glossaryPage').classList.remove('active');
+    }
+
+    let currentGlossaryCat = 'all';
+    let currentGlossarySubCat = '';
+    let currentGlossaryEntry = null;
+
+    const glossaryData = [
+      { id: 1, name: '王刚', cat: '人物', subcat: '家族成员', alias: '王建军', address: '王科长', desc: '邻居，曾在县医院工作', example: '王刚经常端着一把竹椅过来，和我爸爸聊天。', related: '李氏,安徽砀山' },
+      { id: 2, name: '李氏', cat: '人物', subcat: '家族成员', alias: '李桂花', address: '奶奶', desc: '祖母', example: '奶奶总是笑着拿起蒲扇，一边给我扇风一边说..."', related: '王刚,蒲扇' },
+      { id: 3, name: '张奶奶', cat: '人物', subcat: '邻居', alias: '', address: '张奶奶', desc: '隔壁邻居', example: '我听隔壁张奶奶讲了一个鬼故事...', related: '' },
+      { id: 4, name: '安徽砀山', cat: '地点', subcat: '老家', alias: '砀山', address: '', desc: '老家地址', example: '我小时候在老家念书', related: '李氏' },
+      { id: 5, name: '蒲扇', cat: '物品', subcat: '生活用品', alias: '', address: '', desc: '传统纳凉工具，用蒲草编制', example: '大家就靠一把蒲扇解暑', related: '李氏' }
+    ];
+
+    function renderGlossaryList() {
+      const list = document.getElementById('glossaryList');
+      let filtered = glossaryData;
+
+      if (currentGlossaryCat !== 'all') {
+        filtered = filtered.filter(item => item.cat === currentGlossaryCat);
+        if (currentGlossarySubCat) {
+          filtered = filtered.filter(item => item.subcat === currentGlossarySubCat);
+        }
+      }
+
+      const searchText = document.getElementById('glossarySearchInput')?.value?.toLowerCase() || '';
+      if (searchText) {
+        filtered = filtered.filter(item =>
+          item.name.toLowerCase().includes(searchText) ||
+          item.alias.toLowerCase().includes(searchText) ||
+          item.desc.toLowerCase().includes(searchText)
+        );
+      }
+
+      const catIcons = { '人物': '👤', '地点': '📍', '物品': '🎁' };
+
+      if (filtered.length === 0) {
+        list.innerHTML = `
+          <div class="glossary-empty">
+            <div class="glossary-empty-icon">📭</div>
+            <div>暂无词条</div>
+            <div style="font-size: 13px; margin-top: 8px;">点击右上角"添加词条"创建新词条</div>
+          </div>
+        `;
+      } else {
+        list.innerHTML = filtered.map(item => `
+          <div class="glossary-card" onclick="openGlossaryDetailView(${item.id})">
+            <div class="glossary-card-header">
+              <div class="glossary-card-name">
+                <span>${catIcons[item.cat] || '📄'}</span>
+                <span>${escapeHtml(item.name)}</span>
+              </div>
+              <span class="glossary-card-type">${escapeHtml(item.subcat || item.cat)}</span>
+            </div>
+            <div class="glossary-card-aliases">${item.alias ? '别名：' + escapeHtml(item.alias) : '无别名'}</div>
+            <div class="glossary-card-meta">${escapeHtml(item.desc || '暂无描述')}</div>
+          </div>
+        `).join('');
+      }
+
+      const countEl = document.getElementById('glossaryCount');
+      if (countEl) {
+        countEl.textContent = `共 ${filtered.length} 个词条`;
+      }
+    }
+
+    function toggleGlossaryCat(element) {
+      element.classList.toggle('expanded');
+    }
+
+    function selectGlossaryCategory(element, cat) {
+      document.querySelectorAll('.glossary-cat-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      document.querySelectorAll('.glossary-subcat-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      element.classList.add('active');
+      currentGlossaryCat = cat;
+      currentGlossarySubCat = '';
+      renderGlossaryList();
+    }
+
+    function selectGlossarySubCategory(element, cat, subcat) {
+      document.querySelectorAll('.glossary-subcat-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      element.classList.add('active');
+
+      document.querySelectorAll('.glossary-cat-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      currentGlossaryCat = cat;
+      currentGlossarySubCat = subcat;
+      renderGlossaryList();
+    }
+
+    function showAddCatInput() {
+      document.getElementById('newCatInput').style.display = 'block';
+      document.getElementById('newCatName').focus();
+    }
+
+    function addGlossaryCategory() {
+      const name = document.getElementById('newCatName').value.trim();
+      if (!name) {
+        showToast('请输入分类名称', 'warning');
+        return;
+      }
+      showToast('分类已创建：' + name, 'success');
+      document.getElementById('newCatInput').style.display = 'none';
+      document.getElementById('newCatName').value = '';
+    }
+
+    function showAddSubCatInput(parentCat) {
+      const inputEl = document.getElementById('subcat-input-' + parentCat);
+      inputEl.classList.add('active');
+      inputEl.querySelector('input').focus();
+    }
+
+    function addSubCategory(parentCat) {
+      const inputEl = document.getElementById('newSubCatName-' + parentCat);
+      const name = inputEl.value.trim();
+      if (!name) {
+        showToast('请输入子分类名称', 'warning');
+        return;
+      }
+      showToast('子分类已添加：' + name, 'success');
+      inputEl.value = '';
+      inputEl.closest('.glossary-cat-input').classList.remove('active');
+    }
+
+    function editGlossaryCat(cat) {
+      showToast('编辑分类：' + cat, 'success');
+    }
+
+    function deleteGlossaryCat(cat) {
+      if (confirm(`确定要删除分类"${cat}"吗？分类下的词条将被移至"全部"。`)) {
+        showToast('分类已删除：' + cat, 'success');
+      }
+    }
+
+    function filterGlossary() {
+      renderGlossaryList();
+    }
+
+    function openAddGlossaryModal() {
+      currentGlossaryEntry = null;
+      document.getElementById('glossaryEditTitle').textContent = '📋 新增词条';
+      document.getElementById('glossaryName').value = '';
+      document.getElementById('glossaryDesc').value = '';
+      document.getElementById('glossaryAlias').value = '';
+      document.getElementById('glossaryAddress').value = '';
+      document.getElementById('glossaryExample').value = '';
+      document.getElementById('glossaryRelated').value = '';
+
+      document.querySelectorAll('.glossary-cat-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+
+      openModal('glossaryEditModal');
+    }
+
+    function toggleCatSelection(element) {
+      element.classList.toggle('selected');
+    }
+
+    function openGlossaryDetailView(id) {
+      const entry = glossaryData.find(item => item.id === id);
+      if (!entry) return;
+
+      currentGlossaryEntry = entry;
+      document.getElementById('glossaryDetailTitle').textContent = '📋 ' + entry.name;
+
+      const body = document.getElementById('glossaryDetailBody');
+      body.innerHTML = `
+        <div class="glossary-detail-section">
+          <div class="glossary-detail-label">分类</div>
+          <div class="glossary-detail-value">${entry.subcat || entry.cat}</div>
+        </div>
+        <div class="glossary-detail-section">
+          <div class="glossary-detail-label">标准名称</div>
+          <div class="glossary-detail-value">${escapeHtml(entry.name)}</div>
+        </div>
+        ${entry.alias ? `
+        <div class="glossary-detail-section">
+          <div class="glossary-detail-label">别名/曾用名</div>
+          <div class="glossary-detail-value">${escapeHtml(entry.alias)}</div>
+        </div>
+        ` : ''}
+        ${entry.address ? `
+        <div class="glossary-detail-section">
+          <div class="glossary-detail-label">常用称谓</div>
+          <div class="glossary-detail-value">${escapeHtml(entry.address)}</div>
+        </div>
+        ` : ''}
+        ${entry.desc ? `
+        <div class="glossary-detail-section">
+          <div class="glossary-detail-label">解释/描述</div>
+          <div class="glossary-detail-value">${escapeHtml(entry.desc)}</div>
+        </div>
+        ` : ''}
+        ${entry.example ? `
+        <div class="glossary-detail-section">
+          <div class="glossary-detail-label">示例</div>
+          <div class="glossary-detail-example">"${escapeHtml(entry.example)}"</div>
+        </div>
+        ` : ''}
+        ${entry.related ? `
+        <div class="glossary-detail-section">
+          <div class="glossary-detail-label">关联词条</div>
+          <div class="glossary-detail-relations">
+            ${entry.related.split(',').map(r => `<span class="glossary-relation-tag">${escapeHtml(r.trim())}</span>`).join('')}
+          </div>
+        </div>
+        ` : ''}
+      `;
+
+      openModal('glossaryDetailModal');
+    }
+
+    function editCurrentGlossary() {
+      if (!currentGlossaryEntry) return;
+
+      closeModal('glossaryDetailModal');
+      document.getElementById('glossaryEditTitle').textContent = '📋 编辑词条';
+      document.getElementById('glossaryName').value = currentGlossaryEntry.name;
+      document.getElementById('glossaryDesc').value = currentGlossaryEntry.desc || '';
+      document.getElementById('glossaryAlias').value = currentGlossaryEntry.alias || '';
+      document.getElementById('glossaryAddress').value = currentGlossaryEntry.address || '';
+      document.getElementById('glossaryExample').value = currentGlossaryEntry.example || '';
+      document.getElementById('glossaryRelated').value = currentGlossaryEntry.related || '';
+
+      document.querySelectorAll('.glossary-cat-option').forEach(opt => {
+        opt.classList.remove('selected');
+        if (opt.dataset.cat === currentGlossaryEntry.cat) {
+          opt.classList.add('selected');
+        }
+      });
+
+      openModal('glossaryEditModal');
+    }
+
+    function saveGlossaryEntry() {
+      const name = document.getElementById('glossaryName').value.trim();
+      if (!name) {
+        showToast('请输入词条名称', 'warning');
+        return;
+      }
+
+      const selectedCats = [];
+      document.querySelectorAll('.glossary-cat-option.selected').forEach(opt => {
+        selectedCats.push(opt.dataset.cat);
+      });
+
+      if (selectedCats.length === 0) {
+        showToast('请选择至少一个分类', 'warning');
+        return;
+      }
+
+      closeModal('glossaryEditModal');
+      showToast('词条已保存：' + name, 'success');
+      renderGlossaryList();
+    }
+
+    function deleteGlossaryEntry() {
+      if (!currentGlossaryEntry) return;
+
+      if (confirm(`确定要删除词条"${currentGlossaryEntry.name}"吗？`)) {
+        closeModal('glossaryEditModal');
+        showToast('词条已删除：' + currentGlossaryEntry.name, 'success');
+        currentGlossaryEntry = null;
+        renderGlossaryList();
+      }
+    }
+
+    function openBatchImportModal() {
+      showToast('批量导入功能开发中...', 'success');
+    }
+
+    // 保存文档
+    function saveDocument() {
+      const saveBtn = document.getElementById('saveBtn');
+      saveBtn.classList.add('saving');
+      saveBtn.innerHTML = '<span>⏳</span><span>AI分析并保存中...</span>';
+
+      setTimeout(() => {
+        autoGenerateTimeAndTags();
+
+        saveBtn.classList.remove('saving');
+        saveBtn.innerHTML = '<span>✓</span><span>已保存</span>';
+        showToast('文档已保存，时间和标签已自动生成', 'success');
+
+        setTimeout(() => {
+          saveBtn.innerHTML = '<span>💾</span><span>保存</span>';
+        }, 2000);
+      }, 1500);
+    }
+
+    // AI分析时间和标签
+    function analyzeWithAI() {
+      const btn = document.querySelector('.time-analyze-btn');
+      btn.classList.add('loading');
+      btn.innerHTML = '<span>✨</span><span>分析中...</span>';
+
+      setTimeout(() => {
+        autoGenerateTimeAndTags();
+        btn.classList.remove('loading');
+        btn.innerHTML = '<span>✨</span><span>重新分析</span>';
+        showToast('AI分析完成，已更新时间属性和标签', 'success');
+      }, 1200);
+    }
+
+    // 自动生成时间属性和标签
+    function autoGenerateTimeAndTags() {
+      const timeInput = document.getElementById('timeNaturalInput');
+      const timeText = timeInput.value.trim();
+
+      let dateValue = '1985-07-15';
+      let periodValue = '1985年夏季';
+
+      if (timeText.includes('夏天') || timeText.includes('夏季')) {
+        dateValue = '1985-07-15';
+        periodValue = '1985年夏季';
+      } else if (timeText.includes('春节') || timeText.includes('过年')) {
+        dateValue = '1988-02-15';
+        periodValue = '1988年春节';
+      } else if (timeText.includes('童年')) {
+        dateValue = '1980-01-01';
+        periodValue = '1980年代';
+      }
+
+      document.getElementById('attrDate').textContent = dateValue;
+      document.getElementById('attrPeriod').textContent = periodValue;
+
+      const tagsContainer = document.getElementById('tagsContainer');
+      const existingTags = Array.from(tagsContainer.querySelectorAll('.tag')).map(tag =>
+        tag.textContent.replace(' ×', '')
+      );
+
+      if (!existingTags.includes('童年')) {
+        addTag('童年');
+      }
+      if (!existingTags.includes('回忆')) {
+        addTag('回忆');
+      }
+      if (!existingTags.includes('家庭') && timeText.includes('家庭')) {
+        addTag('家庭');
+      }
+    }
+
+    function addTag(tagText) {
+      const tagsContainer = document.getElementById('tagsContainer');
+      const newTag = document.createElement('span');
+      newTag.className = 'tag';
+      newTag.textContent = tagText + ' ×';
+      newTag.onclick = function() { removeTag(this); };
+      tagsContainer.appendChild(newTag);
+      updateTagCount();
+    }
+
+    // 发送悬浮气泡指令
+    function sendFloatCommand() {
+      const input = document.getElementById('aiFloatInput');
+      const command = input.value.trim();
+      if (!command) {
+        showToast('请输入指令', 'warning');
+        return;
+      }
+
+      showToast('已发送指令：' + command, 'success');
+      input.value = '';
+    }
+
+    // 名词库项展开/折叠
+    function toggleGlossaryItem(element) {
+      element.classList.toggle('expanded');
+    }
+
+    // 编辑名词
+    function editGlossaryItem(name) {
+      showToast('编辑名词：' + name, 'success');
+    }
+
+    // 删除名词
+    function deleteGlossaryItem(name) {
+      if (confirm('确定要删除名词"' + name + '"吗？')) {
+        showToast('已删除：' + name, 'success');
+      }
+    }
+
+    // 移除标签
+    function removeTag(element) {
+      element.remove();
+      updateTagCount();
+      showToast('标签已移除', 'success');
+    }
+
+    // 更新标签计数
+    function updateTagCount() {
+      const count = document.querySelectorAll('#tagsContainer .tag').length;
+      document.getElementById('tagCount').textContent = count;
+    }
+
+    function showToast(message, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type;
+      toast.classList.add('active');
+
+      setTimeout(() => {
+        toast.classList.remove('active');
+      }, 2500);
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    const chatInput = document.getElementById('chatInput');
+    if (chatInput) {
+      chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+      });
+
+      chatInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage();
+        }
+      });
+    }
+
+    const editAIInput = document.getElementById('editAIInput');
+    if (editAIInput) {
+      editAIInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+      });
+
+      editAIInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendEditAICommand();
+        }
+      });
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+        }
+      });
+    });
+
+    // 标签输入框回车事件
+    const tagInput = document.getElementById('tagInput');
+    if (tagInput) {
+      tagInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const value = this.value.trim();
+          if (value) {
+            const container = document.getElementById('tagsContainer');
+            const newTag = document.createElement('span');
+            newTag.className = 'tag';
+            newTag.textContent = value + ' ×';
+            newTag.onclick = function() { removeTag(this); };
+            container.appendChild(newTag);
+            this.value = '';
+            updateTagCount();
+            showToast('已添加标签：' + value, 'success');
+          }
+        }
+      });
+    }
+
+    // 底部指令输入框事件
+    const editCommandInput = document.getElementById('editCommandInput');
+    if (editCommandInput) {
+      editCommandInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+      });
+
+      editCommandInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendEditCommand();
+        }
+      });
+    }
+
+    // 模拟自动保存
+    let saveTimeout;
+    function autoSave() {
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        showToast('已自动保存', 'success');
+      }, 2000);
+    }
+
+    document.getElementById('editTitle')?.addEventListener('input', autoSave);
+    document.getElementById('editContent')?.addEventListener('input', autoSave);
+    document.getElementById('timeNaturalInput')?.addEventListener('input', autoSave);
+  </script>
+
+  <!-- 名词库管理页面 -->
+  <div class="glossary-page" id="glossaryPage">
+    <div class="glossary-page-header">
+      <div class="glossary-page-title">
+        <span>📚</span>
+        <span>全局名词库</span>
+      </div>
+      <button class="btn-icon" onclick="closeGlossaryPage()">✕</button>
+    </div>
+    <div class="glossary-page-content">
+      <div class="glossary-page-sidebar">
+        <div class="glossary-search-box">
+          <input type="text" class="glossary-search-input" id="glossarySearchInput" placeholder="🔍 搜索名词..." oninput="filterGlossary()">
+        </div>
+        <div class="glossary-category-list" id="glossaryCategoryList">
+          <div class="glossary-cat-group">
+            <div class="glossary-cat-item active" data-cat="all" onclick="selectGlossaryCategory(this, 'all')">
+              <span class="name">📋 全部词条</span>
+              <span class="count">5</span>
+            </div>
+          </div>
+
+          <div class="glossary-cat-group">
+            <div class="glossary-cat-item expanded" data-cat="人物" onclick="toggleGlossaryCat(this)">
+              <span class="toggle">▶</span>
+              <span class="name">👤 人物</span>
+              <span class="count">3</span>
+              <div class="actions">
+                <button class="glossary-cat-btn" onclick="event.stopPropagation(); editGlossaryCat('人物')" title="编辑">✏️</button>
+                <button class="glossary-cat-btn delete" onclick="event.stopPropagation(); deleteGlossaryCat('人物')" title="删除">🗑️</button>
+              </div>
+            </div>
+            <div class="glossary-subcat-list">
+              <div class="glossary-subcat-item active" onclick="selectGlossarySubCategory(this, '人物', '家族')">
+                <span>家族成员</span>
+                <span class="count">2</span>
+              </div>
+              <div class="glossary-subcat-item" onclick="selectGlossarySubCategory(this, '人物', '邻居')">
+                <span>邻居</span>
+                <span class="count">1</span>
+              </div>
+              <div class="glossary-add-cat" onclick="event.stopPropagation(); showAddSubCatInput('人物')">
+                <span>+</span>
+                <span>添加子分类</span>
+              </div>
+              <div class="glossary-cat-input" id="subcat-input-人物">
+                <div class="glossary-cat-input-row">
+                  <input type="text" placeholder="子分类名称" id="newSubCatName-人物">
+                  <button class="btn btn-primary" onclick="addSubCategory('人物')">添加</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glossary-cat-group">
+            <div class="glossary-cat-item" data-cat="地点" onclick="toggleGlossaryCat(this)">
+              <span class="toggle">▶</span>
+              <span class="name">📍 地点</span>
+              <span class="count">1</span>
+              <div class="actions">
+                <button class="glossary-cat-btn" onclick="event.stopPropagation(); editGlossaryCat('地点')" title="编辑">✏️</button>
+                <button class="glossary-cat-btn delete" onclick="event.stopPropagation(); deleteGlossaryCat('地点')" title="删除">🗑️</button>
+              </div>
+            </div>
+            <div class="glossary-subcat-list">
+              <div class="glossary-subcat-item active" onclick="selectGlossarySubCategory(this, '地点', '老家')">
+                <span>老家</span>
+                <span class="count">1</span>
+              </div>
+              <div class="glossary-add-cat" onclick="event.stopPropagation(); showAddSubCatInput('地点')">
+                <span>+</span>
+                <span>添加子分类</span>
+              </div>
+              <div class="glossary-cat-input" id="subcat-input-地点">
+                <div class="glossary-cat-input-row">
+                  <input type="text" placeholder="子分类名称" id="newSubCatName-地点">
+                  <button class="btn btn-primary" onclick="addSubCategory('地点')">添加</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glossary-cat-group">
+            <div class="glossary-cat-item" data-cat="物品" onclick="toggleGlossaryCat(this)">
+              <span class="toggle">▶</span>
+              <span class="name">🎁 物品</span>
+              <span class="count">1</span>
+              <div class="actions">
+                <button class="glossary-cat-btn" onclick="event.stopPropagation(); editGlossaryCat('物品')" title="编辑">✏️</button>
+                <button class="glossary-cat-btn delete" onclick="event.stopPropagation(); deleteGlossaryCat('物品')" title="删除">🗑️</button>
+              </div>
+            </div>
+            <div class="glossary-subcat-list">
+              <div class="glossary-subcat-item active" onclick="selectGlossarySubCategory(this, '物品', '生活用品')">
+                <span>生活用品</span>
+                <span class="count">1</span>
+              </div>
+              <div class="glossary-add-cat" onclick="event.stopPropagation(); showAddSubCatInput('物品')">
+                <span>+</span>
+                <span>添加子分类</span>
+              </div>
+              <div class="glossary-cat-input" id="subcat-input-物品">
+                <div class="glossary-cat-input-row">
+                  <input type="text" placeholder="子分类名称" id="newSubCatName-物品">
+                  <button class="btn btn-primary" onclick="addSubCategory('物品')">添加</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glossary-cat-input" id="newCatInput" style="padding: 8px 14px; display: none;">
+            <div class="glossary-cat-input-row">
+              <input type="text" placeholder="分类名称" id="newCatName">
+              <button class="btn btn-primary" onclick="addGlossaryCategory()">创建</button>
+            </div>
+          </div>
+          <div class="glossary-add-cat" onclick="showAddCatInput()">
+            <span>+</span>
+            <span>新建分类</span>
+          </div>
+        </div>
+      </div>
+      <div class="glossary-main">
+        <div class="glossary-toolbar">
+          <span class="glossary-count" id="glossaryCount">共 5 个词条</span>
+          <button class="btn btn-secondary" onclick="openBatchImportModal()">
+            <span>📥</span>
+            <span>批量导入</span>
+          </button>
+          <button class="btn btn-primary" onclick="openAddGlossaryModal()">
+            <span>+</span>
+            <span>添加词条</span>
+          </button>
+        </div>
+        <div class="glossary-list" id="glossaryList">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 词条编辑弹窗 -->
+  <div class="modal-overlay" id="glossaryEditModal">
+    <div class="modal" style="width: 560px;">
+      <div class="modal-header">
+        <span class="modal-title" id="glossaryEditTitle">📋 编辑词条</span>
+        <button class="modal-close" onclick="closeModal('glossaryEditModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">词条分类 *</label>
+          <div class="glossary-cat-select" id="glossaryCatSelect">
+            <span class="glossary-cat-option" data-cat="人物" onclick="toggleCatSelection(this)">👤 人物</span>
+            <span class="glossary-cat-option" data-cat="地点" onclick="toggleCatSelection(this)">📍 地点</span>
+            <span class="glossary-cat-option" data-cat="物品" onclick="toggleCatSelection(this)">🎁 物品</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">标准名称 *</label>
+          <input type="text" class="form-input" id="glossaryName" placeholder="输入词条名称">
+        </div>
+        <div class="form-group">
+          <label class="form-label">解释/描述</label>
+          <textarea class="form-textarea" id="glossaryDesc" placeholder="输入词条的解释或描述..." style="min-height: 80px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">别名/曾用名</label>
+          <input type="text" class="form-input" id="glossaryAlias" placeholder="用逗号分隔，如：王建军，小王">
+        </div>
+        <div class="form-group">
+          <label class="form-label">常用称谓</label>
+          <input type="text" class="form-input" id="glossaryAddress" placeholder="用逗号分隔，如：王科长，老王">
+        </div>
+        <div class="form-group">
+          <label class="form-label">示例/用例</label>
+          <textarea class="form-textarea" id="glossaryExample" placeholder="输入该词条在文中的使用示例..." style="min-height: 60px;"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">关联词条</label>
+          <input type="text" class="form-input" id="glossaryRelated" placeholder="输入关联词条，用逗号分隔">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('glossaryEditModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveGlossaryEntry()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 词条详情查看弹窗 -->
+  <div class="modal-overlay" id="glossaryDetailModal">
+    <div class="modal" style="width: 480px;">
+      <div class="modal-header">
+        <span class="modal-title" id="glossaryDetailTitle">📋 词条详情</span>
+        <button class="modal-close" onclick="closeModal('glossaryDetailModal')">✕</button>
+      </div>
+      <div class="modal-body" id="glossaryDetailBody">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('glossaryDetailModal')">关闭</button>
+        <button class="btn btn-primary" onclick="editCurrentGlossary()">编辑</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
