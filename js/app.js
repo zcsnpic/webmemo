@@ -149,6 +149,9 @@ const App = {
     if (tab === 'chat') {
       chatToolbar.style.display = 'block';
       aiFloatBubble.classList.remove('active');
+      if (this.currentMemory) {
+        this.loadMemoryToEditor(this.currentMemory);
+      }
     } else {
       chatToolbar.style.display = 'none';
       aiFloatBubble.classList.add('active');
