@@ -9,7 +9,16 @@
       "role": "assistant",
       "content": "收到",
       "followups": []
+    },
+    {
+      "role": "user",
+      "content": "111111"
+    },
+    {
+      "role": "assistant",
+      "content": "收到",
+      "followups": []
     }
   ],
-  "updated_at": "2026-04-08T10:04:50.407Z"
+  "updated_at": "2026-04-08T10:09:39.312Z"
 }
