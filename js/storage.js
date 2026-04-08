@@ -9,7 +9,8 @@ const Storage = {
     GLOSSARY: 'memoir_glossary',
     CATEGORIES: 'memoir_categories',
     CURRENT_MEMORY: 'memoir_current_memory',
-    AI_MODE: 'memoir_ai_mode'
+    AI_MODE: 'memoir_ai_mode',
+    DRAFT_MEMORY: 'memoir_draft_memory'
   },
 
   get(key) {
@@ -165,5 +166,24 @@ const Storage = {
 
   generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  },
+
+  saveDraft(memoryId, data) {
+    return this.set(this.KEYS.DRAFT_MEMORY, { memoryId, data, savedAt: new Date().toISOString() });
+  },
+
+  getDraft(memoryId) {
+    const draft = this.get(this.KEYS.DRAFT_MEMORY);
+    if (draft && draft.memoryId === memoryId) {
+      return draft.data;
+    }
+    return null;
+  },
+
+  clearDraft(memoryId) {
+    const draft = this.get(this.KEYS.DRAFT_MEMORY);
+    if (draft && draft.memoryId === memoryId) {
+      this.remove(this.KEYS.DRAFT_MEMORY);
+    }
   }
 };

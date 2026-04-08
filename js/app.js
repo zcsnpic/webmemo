@@ -49,6 +49,23 @@ const App = {
     this.bindGlossaryCategoryButtons();
     this.bindTagInput();
     this.bindSearchInput();
+    this.bindDraftAutoSave();
+  },
+
+  bindDraftAutoSave() {
+    let debounceTimer;
+    const saveDraft = () => {
+      if (!this.currentMemory) return;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const title = document.getElementById('memoryTitleInput')?.value || '';
+        const content = document.getElementById('memoryContentInput')?.value || '';
+        Storage.saveDraft(this.currentMemory, { title, content });
+      }, 1000);
+    };
+
+    document.getElementById('memoryTitleInput')?.addEventListener('input', saveDraft);
+    document.getElementById('memoryContentInput')?.addEventListener('input', saveDraft);
   },
 
   bindAiModeButtons() {
@@ -385,8 +402,13 @@ ${content.substring(0, 500)}
 
     if (!memory) return;
 
-    document.getElementById('memoryTitleInput').value = memory.title || '';
-    document.getElementById('memoryContentInput').value = memory.content || '';
+    const draft = Storage.getDraft(memoryId);
+    document.getElementById('memoryTitleInput').value = draft?.title || memory.title || '';
+    document.getElementById('memoryContentInput').value = draft?.content || memory.content || '';
+
+    if (draft) {
+      Storage.clearDraft(memoryId);
+    }
 
     if (memory.date) {
       document.getElementById('timeNaturalInput').value = memory.date;
