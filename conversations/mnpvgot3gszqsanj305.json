@@ -1,0 +1,15 @@
+{
+  "memoryId": "mnpvgot3gszqsanj305",
+  "messages": [
+    {
+      "role": "user",
+      "content": "112333"
+    },
+    {
+      "role": "assistant",
+      "content": "收到",
+      "followups": []
+    }
+  ],
+  "updated_at": "2026-04-08T09:55:30.371Z"
+}
