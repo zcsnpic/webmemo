@@ -33,7 +33,13 @@ const Github = {
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${this.BASE_URL}${path}`, options);
+    let response;
+    try {
+      response = await fetch(`${this.BASE_URL}${path}`, options);
+    } catch (e) {
+      throw new Error(`网络错误: ${e.message}，请检查网络连接`);
+    }
+
     let data;
     try {
       const text = await response.text();
