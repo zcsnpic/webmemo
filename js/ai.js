@@ -58,8 +58,14 @@ const AI = {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'API请求失败');
+        let errorMsg = 'API请求失败';
+        try {
+          const error = await response.json();
+          errorMsg = error.error?.message || error.message || `HTTP ${response.status}`;
+        } catch (e) {
+          errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();

@@ -34,7 +34,13 @@ const Github = {
     }
 
     const response = await fetch(`${this.BASE_URL}${path}`, options);
-    const data = await response.json();
+    let data;
+    try {
+      const text = await response.text();
+      data = text ? JSON.parse(text) : {};
+    } catch (e) {
+      data = {};
+    }
 
     if (!response.ok) {
       throw new Error(data.message || `GitHub API错误: ${response.status}`);
