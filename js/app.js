@@ -104,8 +104,10 @@ const App = {
       try {
         await Github.fullSync();
         this.renderCategoryList();
+        this.loadSettingsValues();
       } catch (e) {
         console.error('Load data error:', e);
+        this.renderCategoryList();
       }
     } else {
       this.renderCategoryList();
