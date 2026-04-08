@@ -54,18 +54,24 @@ const App = {
 
   bindDraftAutoSave() {
     let debounceTimer;
-    const saveDraft = () => {
+    const saveDraft = (e) => {
       if (!this.currentMemory) return;
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         const title = document.getElementById('memoryTitleInput')?.value || '';
         const content = document.getElementById('memoryContentInput')?.value || '';
-        Storage.saveDraft(this.currentMemory, { title, content });
+        if (title || content) {
+          Storage.saveDraft(this.currentMemory, { title, content });
+          console.log('Draft saved:', this.currentMemory, { title, content });
+        }
       }, 1000);
     };
 
-    document.getElementById('memoryTitleInput')?.addEventListener('input', saveDraft);
-    document.getElementById('memoryContentInput')?.addEventListener('input', saveDraft);
+    document.addEventListener('input', (e) => {
+      if (e.target.id === 'memoryTitleInput' || e.target.id === 'memoryContentInput') {
+        saveDraft(e);
+      }
+    });
   },
 
   bindAiModeButtons() {
@@ -403,10 +409,13 @@ ${content.substring(0, 500)}
     if (!memory) return;
 
     const draft = Storage.getDraft(memoryId);
+    console.log('loadMemoryToEditor:', memoryId, { draft, memoryTitle: memory.title, memoryContent: memory.content ? memory.content.substring(0, 50) : '' });
+
     document.getElementById('memoryTitleInput').value = draft?.title || memory.title || '';
     document.getElementById('memoryContentInput').value = draft?.content || memory.content || '';
 
     if (draft) {
+      console.log('Restoring draft, clearing it');
       Storage.clearDraft(memoryId);
     }
 
