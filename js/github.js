@@ -167,7 +167,6 @@ const Github = {
   },
 
   async saveMemory(memory) {
-    const index = Storage.getMemoryIndex();
     const memoryPath = this.getMemoryPath(memory);
 
     const frontmatter = this.generateFrontmatter(memory);
@@ -175,10 +174,11 @@ const Github = {
 
     await this.saveFile(memoryPath, fileContent, `update: ${memory.title}`);
 
+    const index = Storage.getMemoryIndex();
     const existing = index.findIndex(m => m.id === memory.id);
     if (existing >= 0) {
       index[existing] = {
-        id: memory.id,
+        ...index[existing],
         title: memory.title,
         category: memory.category,
         date: memory.date,
@@ -202,11 +202,11 @@ const Github = {
   },
 
   async deleteMemory(memory) {
-    const index = Storage.getMemoryIndex();
     const memoryPath = this.getMemoryPath(memory);
 
     await this.deleteFile(memoryPath, `delete: ${memory.title}`);
 
+    const index = Storage.getMemoryIndex();
     const newIndex = index.filter(m => m.id !== memory.id);
     Storage.setMemoryIndex(newIndex);
 
@@ -316,15 +316,29 @@ const Github = {
   async getIndex() {
     const data = await this.getFile('index.json');
     if (data) {
-      return JSON.parse(data.content);
+      try {
+        return JSON.parse(data.content);
+      } catch (e) {
+        console.error('Parse index error:', e);
+      }
     }
     return { categories: [], memories: [], updated_at: '' };
   },
 
   async saveIndex() {
+    const localMemories = Storage.getMemoryIndex();
     const index = {
       categories: Storage.getCategories(),
-      memories: Storage.getMemoryIndex(),
+      memories: localMemories.map(m => ({
+        id: m.id,
+        title: m.title,
+        category: m.category,
+        date: m.date,
+        content: m.content || '',
+        tags: m.tags || [],
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt
+      })),
       updated_at: new Date().toISOString()
     };
     await this.saveFile('index.json', JSON.stringify(index, null, 2), 'update: index');
@@ -341,8 +355,12 @@ const Github = {
   async getGlossary() {
     const data = await this.getFile('glossary.json');
     if (data) {
-      const parsed = JSON.parse(data.content);
-      return parsed.items || [];
+      try {
+        const parsed = JSON.parse(data.content);
+        return parsed.items || [];
+      } catch (e) {
+        console.error('Parse glossary error:', e);
+      }
     }
     return [];
   },
@@ -361,7 +379,11 @@ const Github = {
     const path = `conversations/${memoryId}.json`;
     const data = await this.getFile(path);
     if (data) {
-      return JSON.parse(data.content);
+      try {
+        return JSON.parse(data.content);
+      } catch (e) {
+        console.error('Parse conversation error:', e);
+      }
     }
     return null;
   },
@@ -379,16 +401,51 @@ const Github = {
 
   async fullSync() {
     const indexData = await this.getIndex();
+
+    const localMemories = Storage.getMemoryIndex();
+    const remoteMemories = indexData.memories || [];
+
+    const merged = this.mergeMemories(localMemories, remoteMemories);
+
     Storage.setCategories(indexData.categories || []);
-    Storage.setMemoryIndex(indexData.memories || []);
+    Storage.setMemoryIndex(merged);
 
     const glossaryData = await this.getGlossary();
     Storage.setGlossary(glossaryData);
 
     return {
       categories: indexData.categories,
-      memories: indexData.memories,
+      memories: merged,
       glossary: glossaryData
     };
+  },
+
+  mergeMemories(local, remote) {
+    const localMap = new Map(local.map(m => [m.id, m]));
+    const remoteMap = new Map(remote.map(m => [m.id, m]));
+    const merged = new Map();
+
+    for (const [id, mem] of localMap) {
+      const remoteMem = remoteMap.get(id);
+      if (remoteMem) {
+        const localTime = new Date(mem.updatedAt || 0).getTime();
+        const remoteTime = new Date(remoteMem.updatedAt || 0).getTime();
+        if (localTime >= remoteTime) {
+          merged.set(id, { ...remoteMem, ...mem });
+        } else {
+          merged.set(id, { ...mem, ...remoteMem });
+        }
+      } else {
+        merged.set(id, mem);
+      }
+    }
+
+    for (const [id, mem] of remoteMap) {
+      if (!merged.has(id)) {
+        merged.set(id, mem);
+      }
+    }
+
+    return Array.from(merged.values());
   }
 };

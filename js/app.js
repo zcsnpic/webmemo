@@ -133,7 +133,7 @@ const App = {
   },
 
   switchTab(tab) {
-    if (this.currentMemory && tab !== 'chat') {
+    if (this.currentMemory && this.currentTab === 'chat') {
       this.saveCurrentDraftToMemory();
     }
 
@@ -155,11 +155,6 @@ const App = {
     } else {
       chatToolbar.style.display = 'none';
       aiFloatBubble.classList.add('active');
-
-      if (this.chatMessages.length > 0) {
-        this.showToast('正在导入并分析内容...', 'info');
-        await this.importAndAnalyzeContent();
-      }
     }
   },
 
@@ -387,6 +382,10 @@ ${content.substring(0, 500)}
   },
 
   selectMemory(memoryId) {
+    if (this.currentMemory && this.currentMemory !== memoryId) {
+      this.saveCurrentDraftToMemory();
+    }
+
     this.currentMemory = memoryId;
     Storage.setCurrentMemory(memoryId);
 
@@ -416,6 +415,9 @@ ${content.substring(0, 500)}
     if (memory.date) {
       document.getElementById('timeNaturalInput').value = memory.date;
       this.updateTimeDisplay(memory);
+    } else {
+      document.getElementById('timeNaturalInput').value = '';
+      this.updateTimeDisplay({ dateAttr: '', period: '' });
     }
   },
 
@@ -590,6 +592,7 @@ ${content.substring(0, 500)}
 
     if (result.success) {
       document.getElementById('memoryContentInput').value = result.content;
+      this.saveCurrentDraftToMemory();
       this.showToast('内容已更新', 'success');
     } else {
       this.showToast('调整失败：' + result.error, 'error');
@@ -648,6 +651,7 @@ ${content.substring(0, 500)}
   saveCurrentDraftToMemory() {
     const title = document.getElementById('memoryTitleInput')?.value || '';
     const content = document.getElementById('memoryContentInput')?.value || '';
+    const timeInput = document.getElementById('timeNaturalInput')?.value || '';
 
     if (!this.currentMemory) return;
 
@@ -656,6 +660,9 @@ ${content.substring(0, 500)}
     if (mem) {
       mem.title = title;
       mem.content = content;
+      if (timeInput) {
+        mem.date = timeInput;
+      }
       Storage.setMemoryIndex(memories);
     }
   },
@@ -821,6 +828,9 @@ ${content.substring(0, 500)}
 
   async fullSync() {
     try {
+      if (this.currentMemory) {
+        this.saveCurrentDraftToMemory();
+      }
       await Github.fullSync();
       this.renderCategoryList();
       this.loadSettingsValues();
@@ -863,8 +873,16 @@ ${content.substring(0, 500)}
     const defaultAiMode = document.getElementById('defaultAiMode').value;
     const namingPattern = document.getElementById('namingPattern').value.trim();
 
-    if (token) Storage.setGithubToken(token);
-    if (repo) Storage.setRepoName(repo);
+    if (token) {
+      Storage.setGithubToken(token);
+    } else {
+      localStorage.removeItem(Storage.KEYS.GITHUB_TOKEN);
+    }
+    if (repo) {
+      Storage.setRepoName(repo);
+    } else {
+      localStorage.removeItem(Storage.KEYS.REPO_NAME);
+    }
     if (apiEndpoint) Storage.set('memoir_api_endpoint', apiEndpoint);
     if (apiKey) Storage.set('memoir_api_key', apiKey);
     Storage.setAiMode(defaultAiMode);
@@ -1126,7 +1144,13 @@ ${content.substring(0, 500)}
 
     items.forEach(item => {
       const title = item.querySelector('.memory-title').textContent.toLowerCase();
-      item.style.display = title.includes(lowerQuery) ? 'flex' : 'none';
+      const memories = Storage.getMemoryIndex();
+      const memId = item.dataset.id;
+      const mem = memories.find(m => m.id === memId);
+      const content = mem?.content?.toLowerCase() || '';
+      const tags = (mem?.tags || []).join(' ').toLowerCase();
+      const match = title.includes(lowerQuery) || content.includes(lowerQuery) || tags.includes(lowerQuery);
+      item.style.display = match ? 'flex' : 'none';
     });
   },
 
