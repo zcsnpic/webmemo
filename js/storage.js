@@ -25,9 +25,27 @@ const Storage = {
 
   set(key, value) {
     try {
-      localStorage.setItem(key, JSON.stringify(value));
+      const serialized = JSON.stringify(value);
+      localStorage.setItem(key, serialized);
+      
+      let total = 0;
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        const v = localStorage.getItem(k);
+        total += (k.length + v.length) * 2;
+      }
+      
+      const LIMIT = 5 * 1024 * 1024;
+      if (total > LIMIT * 0.9) {
+        console.warn('LocalStorage 容量已达 90%，建议清理数据');
+      }
+      
       return true;
     } catch (e) {
+      if (e.name === 'QuotaExceededError') {
+        console.error('LocalStorage 容量超限，请清理数据');
+        throw new Error('存储空间已满，请清理一些数据后重试');
+      }
       console.error('Storage set error:', e);
       return false;
     }

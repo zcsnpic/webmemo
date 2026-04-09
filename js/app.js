@@ -11,39 +11,50 @@ const App = {
     try {
       this.bindEvents();
       await this.loadInitialData();
-      this.switchTab('chat');
+      await this.switchTab('chat');
     } catch (e) {
       console.error('App init error:', e);
     }
   },
 
   bindEvents() {
-    document.getElementById('tabChat').addEventListener('click', () => this.switchTab('chat'));
-    document.getElementById('tabOrganize').addEventListener('click', () => this.switchTab('organize'));
-    document.getElementById('btnNew').addEventListener('click', () => this.showNewMemoryModal());
-    document.getElementById('btnGlossary').addEventListener('click', () => this.showGlossaryModal());
-    document.getElementById('btnSettings').addEventListener('click', () => this.showSettingsModal());
-    document.getElementById('btnSend').addEventListener('click', () => this.sendChatMessage());
-    document.getElementById('chatInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        this.sendChatMessage();
+    const elements = [
+      { id: 'tabChat', event: 'click', handler: () => this.switchTab('chat') },
+      { id: 'tabOrganize', event: 'click', handler: () => this.switchTab('organize') },
+      { id: 'btnNew', event: 'click', handler: () => this.showNewMemoryModal() },
+      { id: 'btnGlossary', event: 'click', handler: () => this.showGlossaryModal() },
+      { id: 'btnSettings', event: 'click', handler: () => this.showSettingsModal() },
+      { id: 'btnSend', event: 'click', handler: () => this.sendChatMessage() },
+      { id: 'chatInput', event: 'keydown', handler: (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          this.sendChatMessage();
+        }
+      }},
+      { id: 'btnAiSend', event: 'click', handler: () => this.sendAiCommand() },
+      { id: 'btnSaveMemory', event: 'click', handler: () => this.saveCurrentMemory() },
+      { id: 'btnBackMatrix', event: 'click', handler: () => this.backToList() },
+      { id: 'btnAnalyzeTime', event: 'click', handler: () => this.analyzeTime() },
+      { id: 'btnConnectGithub', event: 'click', handler: () => this.connectGithub() },
+      { id: 'btnDisconnectGithub', event: 'click', handler: () => this.disconnectGithub() },
+      { id: 'btnNextStep', event: 'click', handler: () => this.goToStep2() },
+      { id: 'btnPrevStep', event: 'click', handler: () => this.backToStep1() },
+      { id: 'btnCreateMemory', event: 'click', handler: () => this.createMemory() },
+      { id: 'btnShowNewColumn', event: 'click', handler: () => this.showNewColumnInModal() },
+      { id: 'btnConfirmNewColumn', event: 'click', handler: () => this.createColumnFromModal() },
+      { id: 'btnAddGlossary', event: 'click', handler: () => this.showGlossaryEditModal() },
+      { id: 'btnSaveGlossary', event: 'click', handler: () => this.saveGlossaryItem() },
+      { id: 'btnConfirmDelete', event: 'click', handler: () => this.confirmDelete() }
+    ];
+
+    elements.forEach(({ id, event, handler }) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener(event, handler);
+      } else {
+        console.warn(`警告：元素 #${id} 未找到，跳过事件绑定`);
       }
     });
-    document.getElementById('btnAiSend').addEventListener('click', () => this.sendAiCommand());
-    document.getElementById('btnSaveMemory').addEventListener('click', () => this.saveCurrentMemory());
-    document.getElementById('btnBackMatrix').addEventListener('click', () => this.backToList());
-    document.getElementById('btnAnalyzeTime').addEventListener('click', () => this.analyzeTime());
-    document.getElementById('btnConnectGithub').addEventListener('click', () => this.connectGithub());
-    document.getElementById('btnDisconnectGithub').addEventListener('click', () => this.disconnectGithub());
-    document.getElementById('btnNextStep').addEventListener('click', () => this.goToStep2());
-    document.getElementById('btnPrevStep').addEventListener('click', () => this.backToStep1());
-    document.getElementById('btnCreateMemory').addEventListener('click', () => this.createMemory());
-    document.getElementById('btnShowNewColumn').addEventListener('click', () => this.showNewColumnInModal());
-    document.getElementById('btnConfirmNewColumn').addEventListener('click', () => this.createColumnFromModal());
-    document.getElementById('btnAddGlossary').addEventListener('click', () => this.showGlossaryEditModal());
-    document.getElementById('btnSaveGlossary').addEventListener('click', () => this.saveGlossaryItem());
-    document.getElementById('btnConfirmDelete').addEventListener('click', () => this.confirmDelete());
 
     this.bindAiModeButtons();
     this.bindGlossaryCategoryButtons();
@@ -62,11 +73,18 @@ const App = {
       }, 2000);
     };
 
-    document.addEventListener('input', (e) => {
+    const inputHandler = (e) => {
       if (e.target.id === 'memoryTitleInput' || e.target.id === 'memoryContentInput') {
         saveDraft();
       }
-    });
+    };
+    
+    document.addEventListener('input', inputHandler);
+    
+    this.cleanupDraftAutoSave = () => {
+      clearTimeout(debounceTimer);
+      document.removeEventListener('input', inputHandler);
+    };
   },
 
   bindAiModeButtons() {
@@ -132,7 +150,7 @@ const App = {
     }
   },
 
-  switchTab(tab) {
+  async switchTab(tab) {
     if (this.currentMemory && this.currentTab === 'chat') {
       this.saveCurrentDraftToMemory();
     }
@@ -155,6 +173,11 @@ const App = {
     } else {
       chatToolbar.style.display = 'none';
       aiFloatBubble.classList.add('active');
+
+      if (this.chatMessages.length > 0) {
+        this.showToast('正在导入并分析内容...', 'info');
+        await this.importAndAnalyzeContent();
+      }
     }
   },
 
@@ -446,33 +469,43 @@ ${content.substring(0, 500)}
 
   renderChatMessages() {
     const container = document.getElementById('chatMessages');
+    
+    if (!container) {
+      console.warn('警告：chatMessages 容器未找到');
+      return;
+    }
 
     if (this.chatMessages.length === 0) {
       container.innerHTML = '<div class="empty-state" id="chatEmptyState"><p>选择或新建素材开始采访</p></div>';
       return;
     }
 
-    container.innerHTML = this.chatMessages.map(msg => {
-      if (msg.role === 'user') {
-        return `<div class="chat-message user"><div class="message-content">${this.escapeHtml(msg.content)}</div></div>`;
-      } else {
-        let followupHtml = '';
-        if (msg.followups && msg.followups.length > 0) {
-          followupHtml = `<div class="message-hints"><div class="message-hints-label">💡 思路提示：</div>${msg.followups.map(f => `<div class="message-hint-item">• ${this.escapeHtml(f)}</div>`).join('')}</div>`;
-        }
-        return `
-          <div class="chat-message ai">
-            <div class="message-avatar">🤖</div>
-            <div class="message-content">
-              ${this.escapeHtml(msg.content)}
-              ${followupHtml}
+    try {
+      container.innerHTML = this.chatMessages.map(msg => {
+        if (msg.role === 'user') {
+          return `<div class="chat-message user"><div class="message-content">${this.escapeHtml(msg.content)}</div></div>`;
+        } else {
+          let followupHtml = '';
+          if (msg.followups && msg.followups.length > 0) {
+            followupHtml = `<div class="message-hints"><div class="message-hints-label">💡 思路提示：</div>${msg.followups.map(f => `<div class="message-hint-item">• ${this.escapeHtml(f)}</div>`).join('')}</div>`;
+          }
+          return `
+            <div class="chat-message ai">
+              <div class="message-avatar">🤖</div>
+              <div class="message-content">
+                ${this.escapeHtml(msg.content)}
+                ${followupHtml}
+              </div>
             </div>
-          </div>
-        `;
-      }
-    }).join('');
+          `;
+        }
+      }).join('');
 
-    container.scrollTop = container.scrollHeight;
+      container.scrollTop = container.scrollHeight;
+    } catch (e) {
+      console.error('渲染聊天消息失败:', e);
+      this.showToast('聊天消息渲染失败', 'error');
+    }
   },
 
   escapeHtml(text) {
@@ -482,70 +515,75 @@ ${content.substring(0, 500)}
   },
 
   async sendChatMessage() {
-    const input = document.getElementById('chatInput');
-    const content = input.value.trim();
+    try {
+      const input = document.getElementById('chatInput');
+      const content = input.value.trim();
 
-    if (!content || !this.currentMemory) {
-      if (!this.currentMemory) {
-        this.showToast('请先选择或创建素材', 'warning');
-      }
-      return;
-    }
-
-    input.value = '';
-
-    this.chatMessages.push({ role: 'user', content });
-    this.renderChatMessages();
-
-    const thinkingMsg = { role: 'assistant', content: '思考中...', isThinking: true };
-    this.chatMessages.push(thinkingMsg);
-    this.renderChatMessages();
-
-    const result = await AI.chat(
-      this.chatMessages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
-      { mode: this.aiMode }
-    );
-
-    this.chatMessages = this.chatMessages.filter(m => !m.isThinking);
-
-    if (result.success) {
-      const nounMatch = result.content.match(/\[名词待确认:([^\]]+)\]/g);
-      const finalContent = result.content.replace(/\[名词待确认:[^\]]+\]/g, '').trim();
-
-      let followups = [];
-      if (this.aiMode === 'L3') {
-        followups = this.generateHintQuestions(finalContent);
+      if (!content || !this.currentMemory) {
+        if (!this.currentMemory) {
+          this.showToast('请先选择或创建素材', 'warning');
+        }
+        return;
       }
 
-      this.chatMessages.push({
-        role: 'assistant',
-        content: finalContent,
-        followups
-      });
+      input.value = '';
 
-      if (nounMatch && this.aiMode !== 'L1') {
-        const nouns = nounMatch.map(n => n.match(/\[名词待确认:([^\]]+)\]/)[1]);
-        this.showNounConfirmDialog(nouns);
+      this.chatMessages.push({ role: 'user', content });
+      this.renderChatMessages();
+
+      const thinkingMsg = { role: 'assistant', content: '思考中...', isThinking: true };
+      this.chatMessages.push(thinkingMsg);
+      this.renderChatMessages();
+
+      const result = await AI.chat(
+        this.chatMessages.slice(0, -1).map(m => ({ role: m.role, content: m.content })),
+        { mode: this.aiMode }
+      );
+
+      this.chatMessages = this.chatMessages.filter(m => !m.isThinking);
+
+      if (result.success) {
+        const nounMatch = result.content.match(/\[名词待确认:([^\]]+)\]/g);
+        const finalContent = result.content.replace(/\[名词待确认:[^\]]+\]/g, '').trim();
+
+        let followups = [];
+        if (this.aiMode === 'L3') {
+          followups = this.generateHintQuestions(finalContent);
+        }
+
+        this.chatMessages.push({
+          role: 'assistant',
+          content: finalContent,
+          followups
+        });
+
+        if (nounMatch && this.aiMode !== 'L1') {
+          const nouns = nounMatch.map(n => n.match(/\[名词待确认:([^\]]+)\]/)[1]);
+          this.showNounConfirmDialog(nouns);
+        }
+      } else {
+        this.chatMessages.push({
+          role: 'assistant',
+          content: `抱歉，发生了错误：${result.error}`
+        });
+        this.showToast('AI 响应失败', 'error');
       }
-    } else {
-      this.chatMessages.push({
-        role: 'assistant',
-        content: `抱歉，发生了错误：${result.error}`
-      });
-      this.showToast('AI响应失败', 'error');
-    }
 
-    this.renderChatMessages();
+      this.renderChatMessages();
 
-    if (Github.isConfigured()) {
-      await Github.saveConversation(this.currentMemory, this.chatMessages);
-    }
+      if (Github.isConfigured()) {
+        await Github.saveConversation(this.currentMemory, this.chatMessages);
+      }
 
-    const memories = Storage.getMemoryIndex();
-    const mem = memories.find(m => m.id === this.currentMemory);
-    if (mem) {
-      mem.dialogueTurns = (mem.dialogueTurns || 0) + 1;
-      Storage.setMemoryIndex(memories);
+      const memories = Storage.getMemoryIndex();
+      const mem = memories.find(m => m.id === this.currentMemory);
+      if (mem) {
+        mem.dialogueTurns = (mem.dialogueTurns || 0) + 1;
+        Storage.setMemoryIndex(memories);
+      }
+    } catch (e) {
+      console.error('发送聊天消息失败:', e);
+      this.showToast('发送消息失败：' + e.message, 'error');
     }
   },
 
@@ -1413,6 +1451,12 @@ ${content.substring(0, 500)}
       toast.classList.add('fade-out');
       setTimeout(() => toast.remove(), 300);
     }, 2500);
+  },
+
+  destroy() {
+    if (this.cleanupDraftAutoSave) {
+      this.cleanupDraftAutoSave();
+    }
   }
 };
 
@@ -1428,5 +1472,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.glossary-cat-option').forEach(o => o.classList.remove('selected'));
       opt.classList.add('selected');
     });
+  });
+
+  window.addEventListener('beforeunload', () => {
+    App.destroy();
   });
 });

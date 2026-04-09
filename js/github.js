@@ -45,11 +45,24 @@ const Github = {
       const text = await response.text();
       data = text ? JSON.parse(text) : {};
     } catch (e) {
-      data = {};
+      console.error('GitHub 响应解析失败:', e);
+      throw new Error(`GitHub 响应解析失败：${e.message}`);
     }
 
     if (!response.ok) {
-      throw new Error(data.message || `GitHub API错误: ${response.status}`);
+      let errorMsg = data.message || `GitHub API 错误：${response.status}`;
+      
+      if (response.status === 401) {
+        errorMsg = 'GitHub 令牌无效或已过期，请检查设置中的 Personal Access Token';
+      } else if (response.status === 403) {
+        errorMsg = 'GitHub 令牌权限不足，请确保已授予 repo 权限';
+      } else if (response.status === 404) {
+        errorMsg = `GitHub 仓库不存在：${config.repo}`;
+      } else if (response.status === 429) {
+        errorMsg = 'GitHub API 请求过于频繁，请稍后再试';
+      }
+      
+      throw new Error(errorMsg);
     }
 
     return data;

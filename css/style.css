@@ -741,7 +741,7 @@ body {
 /* 右侧栏 */
 .sidebar-right {
   width: 240px;
-  background: var(--surface);
+  background: var(--bg-sidebar);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;

@@ -38,11 +38,14 @@ const AI = {
     if (!apiKey) {
       return {
         success: false,
-        error: '请先在设置中配置API密钥'
+        error: '请先在设置中配置 API 密钥'
       };
     }
 
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
       const response = await fetch(this.getAPIUrl(), {
         method: 'POST',
         headers: {
@@ -54,16 +57,28 @@ const AI = {
           messages: requestMessages,
           temperature: 0.7,
           max_tokens: 2000
-        })
+        }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        let errorMsg = 'API请求失败';
-        try {
-          const error = await response.json();
-          errorMsg = error.error?.message || error.message || `HTTP ${response.status}`;
-        } catch (e) {
-          errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+        let errorMsg = 'API 请求失败';
+        
+        if (response.status === 401) {
+          errorMsg = 'API 密钥无效，请检查设置中的 API Key';
+        } else if (response.status === 429) {
+          errorMsg = 'API 请求过于频繁，请稍后再试';
+        } else if (response.status === 503) {
+          errorMsg = 'AI 服务暂时不可用，请稍后再试';
+        } else {
+          try {
+            const error = await response.json();
+            errorMsg = error.error?.message || error.message || `HTTP ${response.status}`;
+          } catch (e) {
+            errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+          }
         }
         throw new Error(errorMsg);
       }
@@ -75,6 +90,12 @@ const AI = {
         usage: data.usage
       };
     } catch (error) {
+      if (error.name === 'AbortError') {
+        return {
+          success: false,
+          error: '请求超时，请检查网络连接后重试'
+        };
+      }
       return {
         success: false,
         error: error.message
