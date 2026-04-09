@@ -1,0 +1,15 @@
+{
+  "memoryId": "mnqqeexell2qm438qn",
+  "messages": [
+    {
+      "role": "user",
+      "content": "我是在1980年左右开始上小学的，然后在2000年正式结束研究生毕业之后开始工作"
+    },
+    {
+      "role": "assistant",
+      "content": "收到",
+      "followups": []
+    }
+  ],
+  "updated_at": "2026-04-09T00:21:34.721Z"
+}
