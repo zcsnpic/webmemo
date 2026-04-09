@@ -296,6 +296,7 @@ body {
 .sidebar-footer {
   padding: 16px;
   border-top: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .nav-items {
@@ -378,6 +379,17 @@ body {
   padding: 14px 20px;
   border-bottom: 1px solid var(--border);
   background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.chat-input-area {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-card);
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 .ai-mode-selector {
@@ -530,12 +542,6 @@ body {
   background: var(--primary);
   border-color: var(--primary);
   color: white;
-}
-
-.chat-input-area {
-  padding: 16px 20px;
-  border-top: 1px solid var(--border);
-  background: var(--bg-card);
 }
 
 .input-wrapper {
