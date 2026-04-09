@@ -9,7 +9,18 @@
       "role": "assistant",
       "content": "收到",
       "followups": []
+    },
+    {
+      "role": "user",
+      "content": "这中间没有停顿过，一直都是很规律的寒暑假，从一个小孩到成年人，从涪陵到上海。"
+    },
+    {
+      "role": "assistant",
+      "content": "从涪陵到上海，这一路走来一定有很多故事吧……后来呢？",
+      "followups": [
+        "您能再说说的情况吗？"
+      ]
     }
   ],
-  "updated_at": "2026-04-09T00:21:34.721Z"
+  "updated_at": "2026-04-09T00:22:06.710Z"
 }
