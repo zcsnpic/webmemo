@@ -4,6 +4,7 @@ const App = {
   currentMemory: null,
   currentMemoryData: null,
   chatMessages: [],
+  lastImportedChatCount: 0,
   aiMode: 'L1',
   isLoading: false,
 
@@ -174,11 +175,33 @@ const App = {
       chatToolbar.style.display = 'none';
       aiFloatBubble.classList.add('active');
 
-      if (this.chatMessages.length > 0) {
-        this.showToast('正在导入并分析内容...', 'info');
-        await this.importAndAnalyzeContent();
+      const newMsgCount = this.chatMessages.filter(m => m.role === 'user').length - this.lastImportedChatCount;
+      if (newMsgCount > 0) {
+        this.appendNewChatContent();
       }
     }
+  },
+
+  appendNewChatContent() {
+    const userMessages = this.chatMessages.filter(m => m.role === 'user');
+    const newMessages = userMessages.slice(this.lastImportedChatCount);
+
+    if (newMessages.length === 0) return;
+
+    const newContent = newMessages.map(m => m.content.trim()).filter(c => c).join('\n\n');
+
+    const editor = document.getElementById('memoryContentInput');
+    const existing = editor.value.trim();
+
+    if (existing) {
+      editor.value = existing + '\n\n' + newContent;
+    } else {
+      editor.value = newContent;
+    }
+
+    this.lastImportedChatCount = userMessages.length;
+    this.saveCurrentDraftToMemory();
+    this.showToast(`已导入${newMessages.length}条新对话内容`, 'success');
   },
 
   async importAndAnalyzeContent() {
@@ -411,6 +434,7 @@ ${content.substring(0, 500)}
 
     this.currentMemory = memoryId;
     Storage.setCurrentMemory(memoryId);
+    this.lastImportedChatCount = 0;
 
     const memories = Storage.getMemoryIndex();
     this.currentMemoryData = memories.find(m => m.id === memoryId);
