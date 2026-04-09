@@ -45,7 +45,8 @@ const App = {
       { id: 'btnConfirmNewColumn', event: 'click', handler: () => this.createColumnFromModal() },
       { id: 'btnAddGlossary', event: 'click', handler: () => this.showGlossaryEditModal() },
       { id: 'btnSaveGlossary', event: 'click', handler: () => this.saveGlossaryItem() },
-      { id: 'btnConfirmDelete', event: 'click', handler: () => this.confirmDelete() }
+      { id: 'btnConfirmDelete', event: 'click', handler: () => this.confirmDelete() },
+      { id: 'panelToggleBtn', event: 'click', handler: () => this.togglePanel() }
     ];
 
     elements.forEach(({ id, event, handler }) => {
@@ -166,12 +167,16 @@ const App = {
     const aiFloatBubble = document.getElementById('aiFloatBubble');
 
     if (tab === 'chat') {
+      document.body.classList.add('chat-active');
+      document.body.classList.remove('organize-active');
       chatToolbar.style.display = 'block';
       aiFloatBubble.classList.remove('active');
       if (this.currentMemory) {
         this.loadMemoryToEditor(this.currentMemory);
       }
     } else {
+      document.body.classList.add('organize-active');
+      document.body.classList.remove('chat-active');
       chatToolbar.style.display = 'none';
       aiFloatBubble.classList.add('active');
 
@@ -1459,6 +1464,13 @@ ${content.substring(0, 500)}
   showSettingsModal() {
     this.loadSettingsValues();
     document.getElementById('settingsModal').classList.add('active');
+  },
+
+  togglePanel() {
+    const sidebarRight = document.getElementById('sidebarRight');
+    const panelToggleBtn = document.getElementById('panelToggleBtn');
+    sidebarRight.classList.toggle('open');
+    panelToggleBtn.classList.toggle('shifted');
   },
 
   showToast(message, type = 'info') {
